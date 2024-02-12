@@ -1,0 +1,40 @@
+Concept de.dlr.sc.virsat.model.extension.fosd displayname "Feature-oriented development" description "temp" 
+{
+	Import de.dlr.sc.virsat.model.extension.ps.*;
+	
+	// --- Feature Tree ---
+	StructuralElement FeatureTree description "Product tree to describe specifications of used components" { 
+		Inherits From [ProductTree];
+		IsRootStructuralElement;
+	}
+	
+	// --- Feature ---
+	StructuralElement Feature description "A components representing the specification of how components are connected" {    
+		Inherits From [ElementDefinition, ProductTreeDomain];
+		Applicable For [FeatureTree, Feature];
+	}
+	
+	// --- SubFeatureRelationship ---
+	Category SubFeatureRelationship description "Category to describe the relationship of the subfeatures" {
+		Applicable For [Feature];
+		Cardinality 1;
+		EnumProperty type values [enumValue1 = "AND", enumValue2 = "OR", enumValue3 = "XOR"];
+	}
+	
+	Category SuperElementUUID description "Category to define the ElementDefinition uuid in the ProductTree 
+	this Feature was created from" {
+		Applicable For [Feature];
+		Cardinality 1;
+		StringProperty uuid;
+	}
+	
+	Category InterfaceEnd {
+	}	
+	
+	Category Interface {
+		Reference ifEndFrom of Type InterfaceEnd;
+		Reference ifEndTo of Type InterfaceEnd;
+	
+	}
+}
+

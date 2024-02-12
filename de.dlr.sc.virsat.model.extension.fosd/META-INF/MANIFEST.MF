@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: VirSat Model Extension Concept
+Bundle-SymbolicName: de.dlr.sc.virsat.model.extension.fosd;singleton:=true
+Bundle-Version: 0.0.1.qualifier
+Bundle-Vendor: German Aerospace Center (DLR)
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ de.dlr.sc.virsat.model,
+ de.dlr.sc.virsat.model.edit,
+ de.dlr.sc.virsat.project,
+ javax.annotation,
+ jakarta.xml.bind,
+ de.dlr.sc.virsat.model.ext.core;visibility:=reexport
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-ActivationPolicy: lazy
+Eclipse-ExtensibleAPI: true
+Export-Package: de.dlr.sc.virsat.model.extension.fosd.model,
+ de.dlr.sc.virsat.model.extension.fosd.util,
+ de.dlr.sc.virsat.model.extension.fosd.validator
+Automatic-Module-Name: de.dlr.sc.virsat.model.extension.fosd
+Import-Package: de.dlr.sc.virsat.model.extension.ps,
+ de.dlr.sc.virsat.model.extension.ps.model

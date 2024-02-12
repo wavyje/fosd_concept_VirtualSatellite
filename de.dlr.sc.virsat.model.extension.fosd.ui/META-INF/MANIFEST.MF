@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: VirSat Model Extension Concept UI
+Bundle-SymbolicName: de.dlr.sc.virsat.model.extension.fosd.ui;singleton:=true
+Bundle-Version: 0.0.1.qualifier
+Require-Bundle: de.dlr.sc.virsat.model.extension.fosd,
+ org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.core.expressions,
+ org.eclipse.emf.edit,
+ org.eclipse.emf.transaction,
+ org.eclipse.core.resources,
+ de.dlr.sc.virsat.model,
+ de.dlr.sc.virsat.project,
+ de.dlr.sc.virsat.project.ui,
+ de.dlr.sc.virsat.uiengine.ui,
+ de.dlr.sc.virsat.external.lib.nebula.incubation
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-ActivationPolicy: lazy
+Automatic-Module-Name: de.dlr.sc.virsat.model.extension.fosd.ui
+Import-Package: de.dlr.sc.virsat.model.extension.ps.model,
+ de.dlr.sc.virsat.model.extension.ps.util
