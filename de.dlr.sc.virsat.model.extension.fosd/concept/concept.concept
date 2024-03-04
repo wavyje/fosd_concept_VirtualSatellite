@@ -1,15 +1,15 @@
-Concept de.dlr.sc.virsat.model.extension.fosd displayname "Feature-oriented development" description "temp" 
+Concept de.dlr.sc.virsat.model.extension.fosd displayname "Feature-oriented development" description "Use FOSD concepts for easier spacecraft development." 
 {
 	Import de.dlr.sc.virsat.model.extension.ps.*;
 	
 	// --- Feature Tree ---
-	StructuralElement FeatureTree description "Product tree to describe specifications of used components" { 
+	StructuralElement FeatureTree description "Feature tree to describe common and variant spacecraft components." { 
 		Inherits From [ProductTree];
 		IsRootStructuralElement;
 	}
 	
 	// --- Feature ---
-	StructuralElement Feature description "A components representing the specification of how components are connected" {    
+	StructuralElement Feature description "Represents a spacecraft componenent." {    
 		Inherits From [ElementDefinition, ProductTreeDomain];
 		Applicable For [FeatureTree, Feature];
 	}
@@ -21,20 +21,5 @@ Concept de.dlr.sc.virsat.model.extension.fosd displayname "Feature-oriented deve
 		EnumProperty type values [enumValue1 = "AND", enumValue2 = "OR", enumValue3 = "XOR"];
 	}
 	
-	Category SuperElementUUID description "Category to define the ElementDefinition uuid in the ProductTree 
-	this Feature was created from" {
-		Applicable For [Feature];
-		Cardinality 1;
-		StringProperty uuid;
-	}
-	
-	Category InterfaceEnd {
-	}	
-	
-	Category Interface {
-		Reference ifEndFrom of Type InterfaceEnd;
-		Reference ifEndTo of Type InterfaceEnd;
-	
-	}
 }
 

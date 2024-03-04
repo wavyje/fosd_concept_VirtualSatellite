@@ -106,7 +106,10 @@ public class ProductStructureHelper {
 			ABeanStructuralElementInstance child = getChildren(sc.getChildren().get(i), childrenTypeName, concept);
 			absc.add(child);
 		}
-
+		// add inheritance
+		absc.setName(sc.getName());
+		// add inheritance
+		absc.getStructuralElementInstance().getSuperSeis().add(sc);
 		return absc;	
 	}
 	

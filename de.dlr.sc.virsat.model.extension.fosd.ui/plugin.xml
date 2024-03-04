@@ -20,18 +20,6 @@
 		pathToImage="resources/icons/SubFeatureRelationship.gif">
 	</conceptImage>
 	<conceptImage
-		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.SuperElementUUID"
-		pathToImage="resources/icons/SuperElementUUID.gif">
-	</conceptImage>
-	<conceptImage
-		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.InterfaceEnd"
-		pathToImage="resources/icons/InterfaceEnd.gif">
-	</conceptImage>
-	<conceptImage
-		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.Interface"
-		pathToImage="resources/icons/Interface.gif">
-	</conceptImage>
-	<conceptImage
 		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.FeatureTree"
 		pathToImage="resources/icons/FeatureTree.gif">
 	</conceptImage>
@@ -44,18 +32,6 @@
 	<command
 		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSubFeatureRelationship"
 		name="Add SubFeatureRelationship">
-	</command>
-	<command
-		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSuperElementUUID"
-		name="Add SuperElementUUID">
-	</command>
-	<command
-		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterfaceEnd"
-		name="Add InterfaceEnd">
-	</command>
-	<command
-		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterface"
-		name="Add Interface">
 	</command>
 	<command
 		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddFeatureTree"
@@ -71,21 +47,6 @@
 	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSubFeatureRelationship"
 	      disabledIcon="resources/icons/SubFeatureRelationship_disabled.gif"
 	      icon="resources/icons/SubFeatureRelationship.gif">
-	</image>
-	<image
-	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSuperElementUUID"
-	      disabledIcon="resources/icons/SuperElementUUID_disabled.gif"
-	      icon="resources/icons/SuperElementUUID.gif">
-	</image>
-	<image
-	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterfaceEnd"
-	      disabledIcon="resources/icons/InterfaceEnd_disabled.gif"
-	      icon="resources/icons/InterfaceEnd.gif">
-	</image>
-	<image
-	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterface"
-	      disabledIcon="resources/icons/Interface_disabled.gif"
-	      icon="resources/icons/Interface.gif">
 	</image>
 	<image
 	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddFeatureTree"
@@ -104,18 +65,6 @@
 		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSubFeatureRelationship">
 	</handler>
 	<handler
-		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddSuperElementUUIDHandler"
-		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSuperElementUUID">
-	</handler>
-	<handler
-		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddInterfaceEndHandler"
-		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterfaceEnd">
-	</handler>
-	<handler
-		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddInterfaceHandler"
-		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterface">
-	</handler>
-	<handler
 		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddStructuralElementInstanceFeatureTreeHandler"
 		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddFeatureTree">
 	</handler>
@@ -132,7 +81,7 @@
 		        id="de.dlr.sc.virsat.model.extension.fosd.menu" 
 		        label="Feature-oriented development"
 		        icon="resources/icons/de.dlr.sc.virsat.model.extension.fosd.gif"
-		        tooltip="temp">
+		        tooltip="Use FOSD concepts for easier spacecraft development.">
 		        <separator
 		            name="categories"
 		            visible="true">
@@ -170,72 +119,6 @@
 			locationURI="popup:de.dlr.sc.virsat.model.extension.fosd.menu?after=categories">
 		<command
 			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSubFeatureRelationship"
-			style="push">
-			<visibleWhen
-				checkEnabled="true">
-				<with
-					variable="selection">
-					<iterate
-						ifEmpty="false"
-						operator="and">
-						<test 
-							property="de.dlr.sc.virsat.model.extension.fosd.ui.propertyTester.conceptEnabled"
-							value="true" 
-							forcePluginActivation="true">
-						</test>		
-						<instanceof
-							value="de.dlr.sc.virsat.model.dvlm.categories.ICategoryAssignmentContainer">
-						</instanceof>
-					</iterate>
-				</with>
-			</visibleWhen>
-		</command>
-		<command
-			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSuperElementUUID"
-			style="push">
-			<visibleWhen
-				checkEnabled="true">
-				<with
-					variable="selection">
-					<iterate
-						ifEmpty="false"
-						operator="and">
-						<test 
-							property="de.dlr.sc.virsat.model.extension.fosd.ui.propertyTester.conceptEnabled"
-							value="true" 
-							forcePluginActivation="true">
-						</test>		
-						<instanceof
-							value="de.dlr.sc.virsat.model.dvlm.categories.ICategoryAssignmentContainer">
-						</instanceof>
-					</iterate>
-				</with>
-			</visibleWhen>
-		</command>
-		<command
-			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterfaceEnd"
-			style="push">
-			<visibleWhen
-				checkEnabled="true">
-				<with
-					variable="selection">
-					<iterate
-						ifEmpty="false"
-						operator="and">
-						<test 
-							property="de.dlr.sc.virsat.model.extension.fosd.ui.propertyTester.conceptEnabled"
-							value="true" 
-							forcePluginActivation="true">
-						</test>		
-						<instanceof
-							value="de.dlr.sc.virsat.model.dvlm.categories.ICategoryAssignmentContainer">
-						</instanceof>
-					</iterate>
-				</with>
-			</visibleWhen>
-		</command>
-		<command
-			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddInterface"
 			style="push">
 			<visibleWhen
 				checkEnabled="true">
@@ -343,36 +226,6 @@
 		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
 		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionSubFeatureRelationship">
 		</uiSnippet>
-		<uiSnippet
-		      id="de.dlr.sc.virsat.model.extension.fosd.table.uiSnippetSuperElementUUID"
-		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
-		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetTableSuperElementUUID">
-		</uiSnippet>
-		<uiSnippet
-		      id="de.dlr.sc.virsat.model.extension.fosd.section.uiSnippetSuperElementUUID"
-		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
-		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionSuperElementUUID">
-		</uiSnippet>
-		<uiSnippet
-		      id="de.dlr.sc.virsat.model.extension.fosd.table.uiSnippetInterfaceEnd"
-		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
-		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetTableInterfaceEnd">
-		</uiSnippet>
-		<uiSnippet
-		      id="de.dlr.sc.virsat.model.extension.fosd.section.uiSnippetInterfaceEnd"
-		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
-		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionInterfaceEnd">
-		</uiSnippet>
-		<uiSnippet
-		      id="de.dlr.sc.virsat.model.extension.fosd.table.uiSnippetInterface"
-		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
-		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetTableInterface">
-		</uiSnippet>
-		<uiSnippet
-		      id="de.dlr.sc.virsat.model.extension.fosd.section.uiSnippetInterface"
-		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
-		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionInterface">
-		</uiSnippet>
 	</extension>
 	<!-- Plugin.XML Protected Region Start -->
 <extension point="org.eclipse.ui.commands">
@@ -389,9 +242,12 @@
             id="de.dlr.sc.virsat.model.extension.fosd.ui.command.UpdateFeatureTree"
             name="Update Feature Tree">
       </command>
-      
+      <command
+			id="de.dlr.sc.virsat.model.extension.fosd.ui.command.Variant"
+			name="Generate Variant Wizard">
+		</command>
 					</extension>
-					<extension point="org.eclipse.ui.commandImages">
+	<extension point="org.eclipse.ui.commandImages">
 						<image
 						    commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.Generate"
 							disabledIcon="resources/icons/ProductStructureWizzard_disabled.gif"
@@ -402,7 +258,7 @@
             disabledIcon="resources/icons/ProductStructureWizzard_disabled.gif"
             icon="resources/icons/ConfigureProductWizard.gif">
       </image>
-					</extension>
+	</extension>
 					<extension
 						point="org.eclipse.ui.menus">       
 						<menuContribution
@@ -435,6 +291,10 @@
 									</with>
 								</visibleWhen> -->
 							</command>
+				<command
+					commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.Variant"
+					style="push">
+				</command>
        <command
              commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.Configure"
              style="push">
@@ -475,6 +335,10 @@
 						 <handler
 							class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.UpdateFeatureTreeHandler"
 							commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.UpdateFeatureTree">
+						</handler>
+						<handler
+							class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.VariantSelectionHandler"
+							commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.Variant">
 						</handler>
 					</extension>
      <extension

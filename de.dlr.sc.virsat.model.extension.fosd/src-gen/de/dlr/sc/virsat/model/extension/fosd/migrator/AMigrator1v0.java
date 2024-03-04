@@ -21,7 +21,7 @@ import de.dlr.sc.virsat.model.concept.migrator.AMigrator;
  * 
  * Don't Manually modify this class
  * 
- * temp
+ * Use FOSD concepts for easier spacecraft development.
  * 
  */	
 public abstract class AMigrator1v0 extends AMigrator {

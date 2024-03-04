@@ -9,6 +9,16 @@
  *******************************************************************************/
 package de.dlr.sc.virsat.model.extension.fosd.ui.wizards;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.function.Function;
+
+import org.chocosolver.sat.MiniSat;
+import org.chocosolver.solver.Model;
+import org.chocosolver.solver.Solver;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ReflectiveItemProviderAdapterFactory;
 import org.eclipse.emf.edit.provider.resource.ResourceItemProviderAdapterFactory;
@@ -20,6 +30,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -39,8 +50,12 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
+import de.dlr.sc.virsat.model.concept.types.category.BeanCategoryAssignment;
+import de.dlr.sc.virsat.model.concept.types.structural.IBeanStructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.Repository;
+import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.categories.propertydefinitions.provider.PropertydefinitionsItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.impl.EnumUnitPropertyInstanceImpl;
 import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.provider.PropertyinstancesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.provider.DVLMCategoriesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.concepts.provider.ConceptsItemProviderAdapterFactory;
@@ -50,7 +65,9 @@ import de.dlr.sc.virsat.model.dvlm.roles.provider.RolesItemProviderAdapterFactor
 import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.structural.provider.DVLMStructuralItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.units.provider.UnitsItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.extension.fosd.model.Feature;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
+import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
 import de.dlr.sc.virsat.model.extension.ps.model.AssemblyTree;
 import de.dlr.sc.virsat.model.extension.ps.model.ConfigurationTree;
@@ -73,7 +90,7 @@ import de.dlr.sc.virsat.project.ui.navigator.labelProvider.VirSatWorkspaceLabelP
  *
  */
 
-public class GenerateFeaturePage extends WizardPage {
+public class VariantSelectionPage extends WizardPage {
 	
 	private ISelection selection;
 	private ISelection preSelect;
@@ -83,7 +100,6 @@ public class GenerateFeaturePage extends WizardPage {
 	private StructuralElementInstance sc;
 	private StructuralElementInstance sei;
 	private boolean generateAsConfigurationTree;
-	private boolean generateAsFeatureTree;
 	private Text treeName;
 	private Tree tree;
 	private TreeEditor editor;
@@ -92,17 +108,13 @@ public class GenerateFeaturePage extends WizardPage {
 	 * @param preSelect the initial selection to be used as a model
 	 */
 	
-	protected GenerateFeaturePage(ISelection preSelect) {
+	protected VariantSelectionPage(ISelection preSelect) {
 		
 		super("");
 		sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
 		if (sc.getType().getName().equals(FeatureTree.class.getSimpleName())) {
 			setTitle("Generate the Configuration Tree");
 			generateAsConfigurationTree = true;
-		}
-		if (sc.getType().getName().equals(ProductTree.class.getSimpleName())) {
-			setTitle("Generate the Feature Tree");
-			generateAsFeatureTree = true;
 		}
 		setDescription("Right click on an element to rename or duplicate");
 		this.preSelect = preSelect;
@@ -118,7 +130,7 @@ public class GenerateFeaturePage extends WizardPage {
 		 */
 		
 		if (generateAsConfigurationTree) {
-			// variant selection
+			this.getAllValidVariants(sc);
 		}
 		
 		content = new Composite(parent, SWT.NONE);
@@ -231,16 +243,11 @@ public class GenerateFeaturePage extends WizardPage {
 		VirSatResourceSet virSatResourceSet = ed.getResourceSet();
 		this.rep = virSatResourceSet.getRepository();
 		
-		// Realize what to generate
-		if (generateAsFeatureTree) {
-			FeatureTree ct = (FeatureTree) ProductStructureHelper.createTreeModel(sc);
-			this.sei = ct.getStructuralElementInstance();
-			treeViewer.setInput(ct.getStructuralElementInstance());
-		} else {
+	
 			ConfigurationTree at = (ConfigurationTree) ProductStructureHelper.createTreeModel(sc);
 			this.sei = at.getStructuralElementInstance();
 			treeViewer.setInput(at.getStructuralElementInstance());
-		}
+	
 		treeViewer.expandAll();
 		tree = treeViewer.getTree();
 		tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
@@ -310,6 +317,83 @@ public class GenerateFeaturePage extends WizardPage {
 			}
 		});
 	}
+	
+	/*
+	 * Get all valid configurations
+	 */
+	public void getAllValidVariants(StructuralElementInstance featureTree) {
+
+		
+		/*
+		 * Translate to CNF
+		 
+		Map<String, Function<Integer, Boolean>> cnfMapper = Map.of(
+				"OR", null
+				);
+		*/
+		
+		/*
+		 * Create SAT solver
+		 */
+		Model model = new Model("d");
+		
+		/*
+		 * Iterate through feature tree with breadth-first search to handle one level of child-features at once
+		 */
+		///TODO CONTINUE HERE WITH ANALYZING THE PROPERTY ACCESS
+		
+		for (StructuralElementInstance feature : featureTree.getDeepChildren()) {
+			
+			Queue<StructuralElementInstance> features = new LinkedList<>();
+			Queue<StructuralElementInstance> seen = new LinkedList<>();
+			features.add(featureTree);
+			seen.add(featureTree);
+			
+			while (!features.isEmpty()) {
+				StructuralElementInstance node = features.poll();
+				
+				/*
+				 * Mandatory
+				 */
+				
+				/*
+				 * Optional
+				 */
+				
+				/*
+				 * Handle SubfeatureRelationships
+				 */
+				Optional<CategoryAssignment> category = node.getCategoryAssignments().stream().filter(cat -> cat.getType().getName().equals("SubFeatureRelationship")).findAny();
+				
+				if (category.isPresent() && !node.getChildren().isEmpty()) {
+					Queue<String> subFeatures = new LinkedList<>();
+					
+					for (StructuralElementInstance child : node.getChildren()) {
+						if (!seen.contains(child)) {
+							features.add(child);
+							seen.add(child);
+							// add to SAT model
+							subFeatures.add(child.getUuid().toString());
+						}
+					}
+					EnumUnitPropertyInstanceImpl relationshipProperty = ((EnumUnitPropertyInstanceImpl) category.get().getPropertyInstances().get(0));
+					switch (relationshipProperty.getValue().getValue()) { 
+					case "OR": model.boolVar(subFeatures.peek()).or(model.boolVar(subFeatures.peek()), model.boolVar(subFeatures.peek())).post();
+					case "AND": model.boolVar(subFeatures.peek()).and(model.boolVar(subFeatures.peek()), model.boolVar(subFeatures.peek())).post();
+					case "XOR": model.boolVar(subFeatures.peek()).xor(model.boolVar(subFeatures.peek()), model.boolVar(subFeatures.peek())).post();
+					}
+					
+				}
+			}
+		}
+		
+		
+		
+		/*
+		 * Solve until all solutions are found
+		 */
+	}
+	
 	/**
 	 * @return canFlipToNextPage
 	 */

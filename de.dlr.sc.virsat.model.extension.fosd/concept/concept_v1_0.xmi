@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ASCII"?>
-<dvlm_c:Concept xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dvlm_c="http://www.virsat.sc.dlr.de/dvlm/v10/c" xmlns:dvlm_cppd="http://www.virsat.sc.dlr.de/dvlm/v10/cp/cppd" name="de.dlr.sc.virsat.model.extension.fosd" description="temp" displayName="Feature-oriented development">
+<dvlm_c:Concept xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dvlm_c="http://www.virsat.sc.dlr.de/dvlm/v10/c" xmlns:dvlm_cppd="http://www.virsat.sc.dlr.de/dvlm/v10/cp/cppd" name="de.dlr.sc.virsat.model.extension.fosd" description="Use FOSD concepts for easier spacecraft development." displayName="Feature-oriented development">
   <imports importedNamespace="de.dlr.sc.virsat.model.extension.ps.*"/>
   <imports importedNamespace="de.dlr.sc.virsat.model.ext.core.*"/>
   <categories name="SubFeatureRelationship" description="Category to describe the relationship of the subfeatures" applicableFor="de.dlr.sc.virsat.model.extension.fosd.Feature" cardinality="1">
@@ -10,22 +10,10 @@
     </properties>
     <extendsCategory href="platform:/resource/de.dlr.sc.virsat.model.ext.core/concept/concept.xmi#de.dlr.sc.virsat.model.ext.core.GenericCategory"/>
   </categories>
-  <categories name="SuperElementUUID" description="Category to define the ElementDefinition uuid in the ProductTree &#xD;&#xA;&#x9;this Feature was created from" applicableFor="de.dlr.sc.virsat.model.extension.fosd.Feature" cardinality="1">
-    <properties xsi:type="dvlm_cppd:StringProperty" name="uuid"/>
-    <extendsCategory href="platform:/resource/de.dlr.sc.virsat.model.ext.core/concept/concept.xmi#de.dlr.sc.virsat.model.ext.core.GenericCategory"/>
-  </categories>
-  <categories name="InterfaceEnd">
-    <extendsCategory href="platform:/resource/de.dlr.sc.virsat.model.ext.core/concept/concept.xmi#de.dlr.sc.virsat.model.ext.core.GenericCategory"/>
-  </categories>
-  <categories name="Interface">
-    <properties xsi:type="dvlm_cppd:ReferenceProperty" name="ifEndFrom" referenceType="de.dlr.sc.virsat.model.extension.fosd.InterfaceEnd"/>
-    <properties xsi:type="dvlm_cppd:ReferenceProperty" name="ifEndTo" referenceType="de.dlr.sc.virsat.model.extension.fosd.InterfaceEnd"/>
-    <extendsCategory href="platform:/resource/de.dlr.sc.virsat.model.ext.core/concept/concept.xmi#de.dlr.sc.virsat.model.ext.core.GenericCategory"/>
-  </categories>
-  <structuralElements name="FeatureTree" description="Product tree to describe specifications of used components" isRootStructuralElement="true">
+  <structuralElements name="FeatureTree" description="Feature tree to describe common and variant spacecraft components." isRootStructuralElement="true">
     <canInheritFrom href="platform:/resource/de.dlr.sc.virsat.model.extension.ps/concept/concept.concept#de.dlr.sc.virsat.model.extension.ps.ProductTree"/>
   </structuralElements>
-  <structuralElements name="Feature" description="A components representing the specification of how components are connected" applicableFor="de.dlr.sc.virsat.model.extension.fosd.FeatureTree de.dlr.sc.virsat.model.extension.fosd.Feature">
+  <structuralElements name="Feature" description="Represents a spacecraft componenent." applicableFor="de.dlr.sc.virsat.model.extension.fosd.FeatureTree de.dlr.sc.virsat.model.extension.fosd.Feature">
     <canInheritFrom href="platform:/resource/de.dlr.sc.virsat.model.extension.ps/concept/concept.concept#de.dlr.sc.virsat.model.extension.ps.ElementDefinition"/>
     <canInheritFrom href="platform:/resource/de.dlr.sc.virsat.model.extension.ps/concept/concept.concept#de.dlr.sc.virsat.model.extension.ps.ProductTreeDomain"/>
   </structuralElements>

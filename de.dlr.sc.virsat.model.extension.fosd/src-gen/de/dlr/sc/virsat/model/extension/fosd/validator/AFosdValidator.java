@@ -22,7 +22,7 @@ import de.dlr.sc.virsat.model.dvlm.validator.IStructuralElementInstanceValidator
  * 
  * Don't Manually modify this class
  * 
- * temp
+ * Use FOSD concepts for easier spacecraft development.
  * 
  */	
 public abstract class AFosdValidator implements IStructuralElementInstanceValidator {

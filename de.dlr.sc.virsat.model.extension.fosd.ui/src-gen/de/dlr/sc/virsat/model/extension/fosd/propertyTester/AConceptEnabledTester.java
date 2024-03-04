@@ -21,7 +21,7 @@ import de.dlr.sc.virsat.project.ui.editingDomain.propertyTester.EditingDomainPro
  * 
  * Don't Manually modify this class
  * 
- * temp
+ * Use FOSD concepts for easier spacecraft development.
  * 
  */	
 public abstract class AConceptEnabledTester extends EditingDomainPropertyTester {

@@ -21,18 +21,6 @@
 			id="de.dlr.sc.virsat.model.extension.fosd.SubFeatureRelationship"
 			caBean="de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship">
 		</CategoryAssignmentBean>
-		<CategoryAssignmentBean
-			id="de.dlr.sc.virsat.model.extension.fosd.SuperElementUUID"
-			caBean="de.dlr.sc.virsat.model.extension.fosd.model.SuperElementUUID">
-		</CategoryAssignmentBean>
-		<CategoryAssignmentBean
-			id="de.dlr.sc.virsat.model.extension.fosd.InterfaceEnd"
-			caBean="de.dlr.sc.virsat.model.extension.fosd.model.InterfaceEnd">
-		</CategoryAssignmentBean>
-		<CategoryAssignmentBean
-			id="de.dlr.sc.virsat.model.extension.fosd.Interface"
-			caBean="de.dlr.sc.virsat.model.extension.fosd.model.Interface">
-		</CategoryAssignmentBean>
 	</extension>
 	<extension point="de.dlr.sc.virsat.model.edit.ConceptTypeFactorySeiBeanRegistration">
 		<StructuralElementInstanceBean

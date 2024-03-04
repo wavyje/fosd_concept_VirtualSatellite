@@ -29,7 +29,7 @@ import org.junit.Before;
  * 
  * Don't Manually modify this class
  * 
- * temp
+ * Use FOSD concepts for easier spacecraft development.
  * 
  */	
 public abstract class AFosdValidatorTest {

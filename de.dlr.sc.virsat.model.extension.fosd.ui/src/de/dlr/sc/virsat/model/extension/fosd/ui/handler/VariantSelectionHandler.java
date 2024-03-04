@@ -26,6 +26,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import de.dlr.sc.virsat.model.dvlm.Repository;
 import de.dlr.sc.virsat.model.dvlm.roles.RightsHelper;
 import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.GenerateFeatureWizard;
+import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.VariantSelectionWizard;
 import de.dlr.sc.virsat.project.editingDomain.VirSatEditingDomainRegistry;
 import de.dlr.sc.virsat.project.resources.VirSatResourceSet;
 
@@ -34,12 +35,12 @@ import de.dlr.sc.virsat.project.resources.VirSatResourceSet;
  * @author bell_er
  *
  */
-public class GenerateHandler extends AbstractHandler implements IHandler {
+public class VariantSelectionHandler extends AbstractHandler implements IHandler {
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ISelection selection = HandlerUtil.getCurrentSelectionChecked(event);
 		Shell shell = HandlerUtil.getActiveWorkbenchWindow(event).getShell();
-		GenerateFeatureWizard wizard = new GenerateFeatureWizard();
+		VariantSelectionWizard wizard = new VariantSelectionWizard();
 		wizard.setSelection(selection);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 		dialog.open(); 			

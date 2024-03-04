@@ -27,7 +27,7 @@ import de.dlr.sc.virsat.model.dvlm.structural.StructuralElement;
 import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.structural.util.StructuralInstantiator;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
-import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.GenerateFeatureWizard;
+import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.ChangeRelationOrDeleteWizard;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
 import de.dlr.sc.virsat.model.extension.ps.model.ProductTree;
 import de.dlr.sc.virsat.model.ui.preferences.PreferencesEditorAutoOpen;
@@ -96,24 +96,22 @@ public class UpdateFeatureTreeHandler extends AbstractHandler implements IHandle
 			List<StructuralElementInstance> featuresToAdd = getAddedElementDefinitions(productTree.getDeepChildren(), featureTree.getDeepChildren());
 			
 			for (StructuralElementInstance featureToAdd : featuresToAdd) {
-				StructuralElementInstance parent = findParentInFeatureTree(featureTree.getDeepChildren(), featureToAdd);
+				EList<StructuralElementInstance> nodesInFeatureTree = featureTree.getDeepChildren();
+				nodesInFeatureTree.add(featureTree);
+				StructuralElementInstance parent = findParentInFeatureTree(nodesInFeatureTree, featureToAdd);
 				addFeatureToFeatureTree(parent, featureToAdd);
 			}
 		}
-		
 			
-		/* 
-		 * Check if every feature in the feature tree has its super ElementDefinition
-		 * This is in case an ElementDefintion is removed.
-		 */
-			
-			
+		if (!removedFromProductTree.isEmpty()) {
+			Shell shell = HandlerUtil.getActiveWorkbenchWindow(event).getShell();
+			ChangeRelationOrDeleteWizard wizard = new ChangeRelationOrDeleteWizard();
+			wizard.setSelection(selection);
+			WizardDialog dialog = new WizardDialog(shell, wizard);
+			dialog.open(); 
+		}
 		/*
-		Shell shell = HandlerUtil.getActiveWorkbenchWindow(event).getShell();
-		GenerateFeatureWizard wizard = new GenerateFeatureWizard();
-		wizard.setSelection(selection);
-		WizardDialog dialog = new WizardDialog(shell, wizard);
-		dialog.open(); 
+		
 		*/			
 		return null;
 		

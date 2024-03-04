@@ -18,7 +18,7 @@ import de.dlr.sc.virsat.project.ui.transactional.handler.ATransactionalAddStruct
  * 
  * Don't Manually modify this class
  * 
- * A components representing the specification of how components are connected
+ * Represents a spacecraft componenent.
  * 
  */	
 public abstract class  AAddStructuralElementInstanceFeatureHandler extends ATransactionalAddStructuralElementHandler implements IHandler {

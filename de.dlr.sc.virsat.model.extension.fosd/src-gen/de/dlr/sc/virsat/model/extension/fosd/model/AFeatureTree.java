@@ -30,7 +30,7 @@ import de.dlr.sc.virsat.model.dvlm.structural.StructuralFactory;
  * 
  * Don't Manually modify this class
  * 
- * Product tree to describe specifications of used components
+ * Feature tree to describe common and variant spacecraft components.
  * 
  */	
 public abstract class AFeatureTree extends ABeanStructuralElementInstance implements IBeanStructuralElementInstance {

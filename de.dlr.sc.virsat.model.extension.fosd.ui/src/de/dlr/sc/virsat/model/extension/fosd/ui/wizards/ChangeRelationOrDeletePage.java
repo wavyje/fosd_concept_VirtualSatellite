@@ -9,9 +9,12 @@
  *******************************************************************************/
 package de.dlr.sc.virsat.model.extension.fosd.ui.wizards;
 
+import org.eclipse.emf.common.command.Command;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ReflectiveItemProviderAdapterFactory;
 import org.eclipse.emf.edit.provider.resource.ResourceItemProviderAdapterFactory;
+import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -40,17 +43,24 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
 import de.dlr.sc.virsat.model.dvlm.Repository;
+import de.dlr.sc.virsat.model.dvlm.categories.Category;
+import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.categories.propertydefinitions.provider.PropertydefinitionsItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.provider.PropertyinstancesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.provider.DVLMCategoriesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.concepts.provider.ConceptsItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.concepts.util.ActiveConceptHelper;
 import de.dlr.sc.virsat.model.dvlm.general.provider.GeneralItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.provider.DVLMItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.roles.provider.RolesItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.structural.StructuralElement;
 import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.structural.provider.DVLMStructuralItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.structural.util.StructuralInstantiator;
 import de.dlr.sc.virsat.model.dvlm.units.provider.UnitsItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
+import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
+import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelationshipCommand;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
 import de.dlr.sc.virsat.model.extension.ps.model.AssemblyTree;
 import de.dlr.sc.virsat.model.extension.ps.model.ConfigurationTree;
@@ -59,6 +69,7 @@ import de.dlr.sc.virsat.project.editingDomain.VirSatEditingDomainRegistry;
 import de.dlr.sc.virsat.project.editingDomain.VirSatTransactionalEditingDomain;
 import de.dlr.sc.virsat.project.resources.VirSatProjectResource;
 import de.dlr.sc.virsat.project.resources.VirSatResourceSet;
+import de.dlr.sc.virsat.project.structure.command.CreateAddSeiWithFileStructureCommand;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatComposedContentProvider;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatFilteredWrappedTreeContentProvider;
 import de.dlr.sc.virsat.project.ui.labelProvider.VirSatComposedLabelProvider;
@@ -73,7 +84,7 @@ import de.dlr.sc.virsat.project.ui.navigator.labelProvider.VirSatWorkspaceLabelP
  *
  */
 
-public class GenerateFeaturePage extends WizardPage {
+public class ChangeRelationOrDeletePage extends WizardPage {
 	
 	private ISelection selection;
 	private ISelection preSelect;
@@ -84,7 +95,6 @@ public class GenerateFeaturePage extends WizardPage {
 	private StructuralElementInstance sei;
 	private boolean generateAsConfigurationTree;
 	private boolean generateAsFeatureTree;
-	private Text treeName;
 	private Tree tree;
 	private TreeEditor editor;
 	/**
@@ -92,35 +102,19 @@ public class GenerateFeaturePage extends WizardPage {
 	 * @param preSelect the initial selection to be used as a model
 	 */
 	
-	protected GenerateFeaturePage(ISelection preSelect) {
+	protected ChangeRelationOrDeletePage(ISelection preSelect) {
 		
 		super("");
 		sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
-		if (sc.getType().getName().equals(FeatureTree.class.getSimpleName())) {
-			setTitle("Generate the Configuration Tree");
-			generateAsConfigurationTree = true;
-		}
-		if (sc.getType().getName().equals(ProductTree.class.getSimpleName())) {
-			setTitle("Generate the Feature Tree");
-			generateAsFeatureTree = true;
-		}
-		setDescription("Right click on an element to rename or duplicate");
+		setTitle("Change Relation or Delete");
+		
+		//setDescription("Right click on an element to rename or duplicate");
 		this.preSelect = preSelect;
 		
 	}
 
 	@Override
 	public void createControl(Composite parent) {
-		
-		/*
-		 * If ConfigTree should be generate, make the variant selection and set the selected
-		 * variant as the new preselection.
-		 */
-		
-		if (generateAsConfigurationTree) {
-			// variant selection
-		}
-		
 		content = new Composite(parent, SWT.NONE);
 		GridLayout glContent = new GridLayout();
 		glContent.numColumns = 2;
@@ -145,8 +139,8 @@ public class GenerateFeaturePage extends WizardPage {
 	    
 	    Composite composite = new Composite(content, SWT.NONE);
 	    composite.setLayout(new GridLayout(2, false));
-	    Button btnRename = new Button(composite, SWT.NONE);
-	    btnRename.addSelectionListener(new SelectionAdapter() {
+	    Button btnChangeRelation = new Button(composite, SWT.NONE);
+	    btnChangeRelation.addSelectionListener(new SelectionAdapter() {
 	    	@Override
 	    	public void widgetSelected(SelectionEvent e) {
 	    		// Identify the selected row
@@ -156,6 +150,7 @@ public class GenerateFeaturePage extends WizardPage {
 	    			return;
 	    		}
 	    		// The control that will be the editor must be a child of the Tree
+	    		/*
 	    		Text newEditor = new Text(tree, SWT.NONE);
 	    		StructuralElementInstance temp = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
 	    		newEditor.setText(temp.getName());
@@ -170,9 +165,34 @@ public class GenerateFeaturePage extends WizardPage {
 	    		newEditor.selectAll();
 	    		newEditor.setFocus();
 	    		editor.setEditor(newEditor, items[0]);
+	    		
+	    		---------------------------------------
+	    		String structuralElementName = "Feature";
+				StructuralElement structuralElement = ActiveConceptHelper.getStructuralElement(concept, structuralElementName);
+				StructuralInstantiator structuralInstantiator = new StructuralInstantiator();
+				StructuralElementInstance structuralElementInstance = structuralInstantiator.generateInstance(structuralElement, structuralElementName);
+				structuralElementInstance.setAssignedDiscipline(parent.getAssignedDiscipline());
+				structuralElementInstance.getSuperSeis().add(inheritance);
+				structuralElementInstance.setName(inheritance.getName());
+				
+				// Create command and execute
+				Command addStructuralElementInstance = CreateAddSeiWithFileStructureCommand.create(ed, parent, structuralElementInstance);
+				ed.getCommandStack().execute(addStructuralElementInstance);
+	    		
+	    		TransactionalEditingDomain ed = VirSatEditingDomainRegistry.INSTANCE.getEd(eObject);
+	    		VirSatResourceSet resSet = (VirSatResourceSet) ed.getResourceSet();
+	    		Repository repository = resSet.getRepository();
+	    		ActiveConceptHelper ach = new ActiveConceptHelper(repository)
+	    		Category category = ach.getCategory("de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship");
+	    		StructuralElementInstance temp = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
+	    		temp.getCategoryAssignments().add(category);
+	    		CreateAddSubFeatureRelationshipCommand command = new CreateAddSubFeatureRelationshipCommand();
+	    		Command addSubFeatureRelation = command.create(ed, sc, ActiveConceptHelper.getConcept(temp.getType()));
+	    		ed.getCommandStack().execute(addSubFeatureRelation);
+	    		*/
 	    	}
 	    });
-	    btnRename.setText("Rename");
+	    btnChangeRelation.setText("Change Relation");
 	    Button btnDuplicate = new Button(composite, SWT.NONE);
 	    btnDuplicate.addSelectionListener(new SelectionAdapter() {
 	    	@Override
@@ -181,21 +201,16 @@ public class GenerateFeaturePage extends WizardPage {
 	    		ProductStructureHelper.duplicate(sc);
 	    	}
 	    });
-	    btnDuplicate.setText("Duplicate");
+	    btnDuplicate.setText("Delete Feature");
 	    new Label(content, SWT.NONE);
 	    Label lblTreeName = new Label(content, SWT.NONE);
 	    lblTreeName.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
-	    treeName = new Text(content, SWT.BORDER);
-	    treeName.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 	  
-	 
-	    if (generateAsConfigurationTree) {
-	    	lblTreeName.setText("Configuration Tree Name");
-	    	treeName.setText(ConfigurationTree.class.getSimpleName());
-		} else {
-			lblTreeName.setText("Feature Tree Name");
-			treeName.setText(FeatureTree.class.getSimpleName());
-		}
+	    
+	    
+	    lblTreeName.setText("Deleted Elements in Production Tree: ");
+	    	
+		
 	   
 	}
 	
@@ -232,15 +247,10 @@ public class GenerateFeaturePage extends WizardPage {
 		this.rep = virSatResourceSet.getRepository();
 		
 		// Realize what to generate
-		if (generateAsFeatureTree) {
-			FeatureTree ct = (FeatureTree) ProductStructureHelper.createTreeModel(sc);
-			this.sei = ct.getStructuralElementInstance();
-			treeViewer.setInput(ct.getStructuralElementInstance());
-		} else {
-			ConfigurationTree at = (ConfigurationTree) ProductStructureHelper.createTreeModel(sc);
-			this.sei = at.getStructuralElementInstance();
-			treeViewer.setInput(at.getStructuralElementInstance());
-		}
+		
+		this.sei = sc;
+		treeViewer.setInput(sc);
+		
 		treeViewer.expandAll();
 		tree = treeViewer.getTree();
 		tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
@@ -369,10 +379,5 @@ public class GenerateFeaturePage extends WizardPage {
 	public void setSei(StructuralElementInstance sei) {
 		this.sei = sei;
 	}
-	/**
-	 * @return sei StructuralElementInstance
-	 */
-	public String getSeiName() {
-		return treeName.getText();
-	}
+	
 }
