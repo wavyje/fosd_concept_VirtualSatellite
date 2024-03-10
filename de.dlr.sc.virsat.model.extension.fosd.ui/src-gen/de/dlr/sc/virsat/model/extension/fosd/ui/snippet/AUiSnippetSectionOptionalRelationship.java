@@ -18,11 +18,11 @@ import de.dlr.sc.virsat.uiengine.ui.editor.snippets.AUiSnippetGenericPropertyIns
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Use this to mark the feature as optional.
  * 
  */	
-public abstract class AUiSnippetSectionSubFeatureRelationship extends AUiSnippetGenericPropertyInstances implements IUiSnippet {
-	public AUiSnippetSectionSubFeatureRelationship() {
-		super("de.dlr.sc.virsat.model.extension.fosd", "SubFeatureRelationship");
+public abstract class AUiSnippetSectionOptionalRelationship extends AUiSnippetGenericPropertyInstances implements IUiSnippet {
+	public AUiSnippetSectionOptionalRelationship() {
+		super("de.dlr.sc.virsat.model.extension.fosd", "OptionalRelationship");
 	}
 }

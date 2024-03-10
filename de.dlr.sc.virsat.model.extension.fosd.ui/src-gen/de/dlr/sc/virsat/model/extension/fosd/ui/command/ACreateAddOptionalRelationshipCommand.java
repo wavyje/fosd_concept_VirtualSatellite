@@ -18,19 +18,19 @@ import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import org.eclipse.emf.ecore.EObject;
 
 
-import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
+import de.dlr.sc.virsat.model.extension.fosd.model.OptionalRelationship;
 
 /**
  * Auto Generated Abstract Generator Gap Class
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Use this to mark the feature as optional.
  * 
  */	
-public abstract class ACreateAddSubFeatureRelationshipCommand {
+public abstract class ACreateAddOptionalRelationshipCommand {
 	public Command create(EditingDomain editingDomain, EObject owner, Concept activeConcept) {
-		SubFeatureRelationship conceptObject = new SubFeatureRelationship(activeConcept);
+		OptionalRelationship conceptObject = new OptionalRelationship(activeConcept);
 		CategoryAssignment ca = conceptObject.getTypeInstance();
 		return AddCommand.create(editingDomain, owner, CategoriesPackage.Literals.ICATEGORY_ASSIGNMENT_CONTAINER__CATEGORY_ASSIGNMENTS, ca);
 	}

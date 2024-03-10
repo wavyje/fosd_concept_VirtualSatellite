@@ -20,3 +20,7 @@ Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: de.dlr.sc.virsat.model.extension.fosd.ui
 Import-Package: de.dlr.sc.virsat.model.extension.ps.model,
  de.dlr.sc.virsat.model.extension.ps.util
+Bundle-ClassPath: libs/org.sat4j.core.jar,
+ .
+Export-Package: org.sat4j.core
+

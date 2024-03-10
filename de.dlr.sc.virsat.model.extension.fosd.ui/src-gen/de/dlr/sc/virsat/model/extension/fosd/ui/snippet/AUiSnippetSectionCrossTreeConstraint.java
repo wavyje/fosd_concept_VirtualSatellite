@@ -18,11 +18,11 @@ import de.dlr.sc.virsat.uiengine.ui.editor.snippets.AUiSnippetGenericPropertyIns
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Reference to another feature and character of relationship.
  * 
  */	
-public abstract class AUiSnippetSectionSubFeatureRelationship extends AUiSnippetGenericPropertyInstances implements IUiSnippet {
-	public AUiSnippetSectionSubFeatureRelationship() {
-		super("de.dlr.sc.virsat.model.extension.fosd", "SubFeatureRelationship");
+public abstract class AUiSnippetSectionCrossTreeConstraint extends AUiSnippetGenericPropertyInstances implements IUiSnippet {
+	public AUiSnippetSectionCrossTreeConstraint() {
+		super("de.dlr.sc.virsat.model.extension.fosd", "CrossTreeConstraint");
 	}
 }

@@ -14,7 +14,7 @@ import org.eclipse.emf.edit.domain.EditingDomain;
 import org.eclipse.emf.common.command.Command;
 import de.dlr.sc.virsat.uiengine.ui.editor.snippets.IUiSnippet;
 import de.dlr.sc.virsat.uiengine.ui.editor.snippets.AUiSnippetGenericCategoryAssignmentTable;
-import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelationshipCommand;
+import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddOptionalRelationshipCommand;
 
 ;
 
@@ -23,19 +23,19 @@ import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelat
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Use this to mark the feature as optional.
  * 
  */	
-public abstract class AUiSnippetTableSubFeatureRelationship extends AUiSnippetGenericCategoryAssignmentTable implements IUiSnippet {
-	public AUiSnippetTableSubFeatureRelationship() {
+public abstract class AUiSnippetTableOptionalRelationship extends AUiSnippetGenericCategoryAssignmentTable implements IUiSnippet {
+	public AUiSnippetTableOptionalRelationship() {
 		super("de.dlr.sc.virsat.model.extension.fosd",
-			"SubFeatureRelationship",
-			"de.dlr.sc.virsat.model.extension.fosd.SubFeatureRelationship",
+			"OptionalRelationship",
+			"de.dlr.sc.virsat.model.extension.fosd.OptionalRelationship",
 			STYLE_ADD_BUTTON | STYLE_REMOVE_BUTTON | STYLE_EDITOR_BUTTON);
 	}
 
 	@Override
 	protected Command createAddCommand(EditingDomain editingDomain, Concept activeConcept) {
-		return new CreateAddSubFeatureRelationshipCommand().create(editingDomain, model, activeConcept);
+		return new CreateAddOptionalRelationshipCommand().create(editingDomain, model, activeConcept);
 	}
 }

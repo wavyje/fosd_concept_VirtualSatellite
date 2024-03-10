@@ -37,10 +37,10 @@ import org.junit.Test;
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Use this to mark the feature as optional.
  * 
  */	
-public abstract class ASubFeatureRelationshipTest {
+public abstract class AOptionalRelationshipTest {
 	
 	protected Concept concept;
 	
@@ -60,24 +60,24 @@ public abstract class ASubFeatureRelationshipTest {
 	// *****************************************************************
 	
 	@Test
-	public void testSubFeatureRelationship() {
-		SubFeatureRelationship testSubFeatureRelationship = new SubFeatureRelationship();
+	public void testOptionalRelationship() {
+		OptionalRelationship testOptionalRelationship = new OptionalRelationship();
 	
-		assertNull("There is no internal DVLM object", testSubFeatureRelationship.getTypeInstance());
+		assertNull("There is no internal DVLM object", testOptionalRelationship.getTypeInstance());
 	}
 	
 	@Test
-	public void testSubFeatureRelationshipConcept() {
-		SubFeatureRelationship testSubFeatureRelationship = new SubFeatureRelationship(concept);
+	public void testOptionalRelationshipConcept() {
+		OptionalRelationship testOptionalRelationship = new OptionalRelationship(concept);
 		
-		assertNotNull("There is an internal DVLM object", testSubFeatureRelationship.getATypeInstance());
+		assertNotNull("There is an internal DVLM object", testOptionalRelationship.getATypeInstance());
 	}
 	
 	@Test
-	public void testSubFeatureRelationshipCategoryAssignment() {
+	public void testOptionalRelationshipCategoryAssignment() {
 		CategoryAssignment testCa = CategoriesFactory.eINSTANCE.createCategoryAssignment();
-		SubFeatureRelationship testSubFeatureRelationship = new SubFeatureRelationship(testCa);
+		OptionalRelationship testOptionalRelationship = new OptionalRelationship(testCa);
 		
-		assertEquals("DVLM object has been set as specified", testCa, testSubFeatureRelationship.getTypeInstance());
+		assertEquals("DVLM object has been set as specified", testCa, testOptionalRelationship.getTypeInstance());
 	}
 }

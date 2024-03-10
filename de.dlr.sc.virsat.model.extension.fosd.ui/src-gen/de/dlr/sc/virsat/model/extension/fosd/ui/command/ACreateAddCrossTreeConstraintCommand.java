@@ -18,19 +18,19 @@ import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import org.eclipse.emf.ecore.EObject;
 
 
-import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
+import de.dlr.sc.virsat.model.extension.fosd.model.CrossTreeConstraint;
 
 /**
  * Auto Generated Abstract Generator Gap Class
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Reference to another feature and character of relationship.
  * 
  */	
-public abstract class ACreateAddSubFeatureRelationshipCommand {
+public abstract class ACreateAddCrossTreeConstraintCommand {
 	public Command create(EditingDomain editingDomain, EObject owner, Concept activeConcept) {
-		SubFeatureRelationship conceptObject = new SubFeatureRelationship(activeConcept);
+		CrossTreeConstraint conceptObject = new CrossTreeConstraint(activeConcept);
 		CategoryAssignment ca = conceptObject.getTypeInstance();
 		return AddCommand.create(editingDomain, owner, CategoriesPackage.Literals.ICATEGORY_ASSIGNMENT_CONTAINER__CATEGORY_ASSIGNMENTS, ca);
 	}

@@ -15,17 +15,17 @@ import org.eclipse.emf.common.command.Command;
 import org.eclipse.emf.ecore.EObject;
 
 import de.dlr.sc.virsat.project.ui.transactional.handler.ATransactionalAddCategoryHandler;
-import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelationshipCommand;
+import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddOptionalRelationshipCommand;
 
 /**
  * Auto Generated Abstract Generator Gap Class
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Use this to mark the feature as optional.
  * 
  */	
-public abstract class AAddSubFeatureRelationshipHandler extends ATransactionalAddCategoryHandler {
+public abstract class AAddOptionalRelationshipHandler extends ATransactionalAddCategoryHandler {
 	
 	@Override
 	protected String getConceptName() {
@@ -34,6 +34,6 @@ public abstract class AAddSubFeatureRelationshipHandler extends ATransactionalAd
 	
 	@Override
 	protected Command createAddCommand(EditingDomain editingDomain, EObject owner, Concept activeConcept) {
-		return new CreateAddSubFeatureRelationshipCommand().create(editingDomain, owner, activeConcept);
+		return new CreateAddOptionalRelationshipCommand().create(editingDomain, owner, activeConcept);
 	}
 }

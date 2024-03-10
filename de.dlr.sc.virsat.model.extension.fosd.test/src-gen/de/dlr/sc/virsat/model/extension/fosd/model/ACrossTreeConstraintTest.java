@@ -37,10 +37,10 @@ import org.junit.Test;
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Reference to another feature and character of relationship.
  * 
  */	
-public abstract class ASubFeatureRelationshipTest {
+public abstract class ACrossTreeConstraintTest {
 	
 	protected Concept concept;
 	
@@ -60,24 +60,24 @@ public abstract class ASubFeatureRelationshipTest {
 	// *****************************************************************
 	
 	@Test
-	public void testSubFeatureRelationship() {
-		SubFeatureRelationship testSubFeatureRelationship = new SubFeatureRelationship();
+	public void testCrossTreeConstraint() {
+		CrossTreeConstraint testCrossTreeConstraint = new CrossTreeConstraint();
 	
-		assertNull("There is no internal DVLM object", testSubFeatureRelationship.getTypeInstance());
+		assertNull("There is no internal DVLM object", testCrossTreeConstraint.getTypeInstance());
 	}
 	
 	@Test
-	public void testSubFeatureRelationshipConcept() {
-		SubFeatureRelationship testSubFeatureRelationship = new SubFeatureRelationship(concept);
+	public void testCrossTreeConstraintConcept() {
+		CrossTreeConstraint testCrossTreeConstraint = new CrossTreeConstraint(concept);
 		
-		assertNotNull("There is an internal DVLM object", testSubFeatureRelationship.getATypeInstance());
+		assertNotNull("There is an internal DVLM object", testCrossTreeConstraint.getATypeInstance());
 	}
 	
 	@Test
-	public void testSubFeatureRelationshipCategoryAssignment() {
+	public void testCrossTreeConstraintCategoryAssignment() {
 		CategoryAssignment testCa = CategoriesFactory.eINSTANCE.createCategoryAssignment();
-		SubFeatureRelationship testSubFeatureRelationship = new SubFeatureRelationship(testCa);
+		CrossTreeConstraint testCrossTreeConstraint = new CrossTreeConstraint(testCa);
 		
-		assertEquals("DVLM object has been set as specified", testCa, testSubFeatureRelationship.getTypeInstance());
+		assertEquals("DVLM object has been set as specified", testCa, testCrossTreeConstraint.getTypeInstance());
 	}
 }

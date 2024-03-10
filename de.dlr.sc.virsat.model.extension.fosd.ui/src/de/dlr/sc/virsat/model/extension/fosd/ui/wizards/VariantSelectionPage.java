@@ -10,15 +10,10 @@
 package de.dlr.sc.virsat.model.extension.fosd.ui.wizards;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.function.Function;
 
-import org.chocosolver.sat.MiniSat;
-import org.chocosolver.solver.Model;
-import org.chocosolver.solver.Solver;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ReflectiveItemProviderAdapterFactory;
 import org.eclipse.emf.edit.provider.resource.ResourceItemProviderAdapterFactory;
@@ -49,13 +44,15 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.sat4j.core.VecInt;
+import org.sat4j.minisat.SolverFactory;
+import org.sat4j.specs.ContradictionException;
+import org.sat4j.specs.ISolver;
+import org.sat4j.tools.DimacsStringSolver;
 
-import de.dlr.sc.virsat.model.concept.types.category.BeanCategoryAssignment;
-import de.dlr.sc.virsat.model.concept.types.structural.IBeanStructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.Repository;
 import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.categories.propertydefinitions.provider.PropertydefinitionsItemProviderAdapterFactory;
-import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.impl.EnumUnitPropertyInstanceImpl;
 import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.provider.PropertyinstancesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.provider.DVLMCategoriesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.concepts.provider.ConceptsItemProviderAdapterFactory;
@@ -65,13 +62,12 @@ import de.dlr.sc.virsat.model.dvlm.roles.provider.RolesItemProviderAdapterFactor
 import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.structural.provider.DVLMStructuralItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.units.provider.UnitsItemProviderAdapterFactory;
-import de.dlr.sc.virsat.model.extension.fosd.model.Feature;
+import de.dlr.sc.virsat.model.extension.fosd.model.CrossTreeConstraint;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
+import de.dlr.sc.virsat.model.extension.fosd.model.OptionalRelationship;
 import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
-import de.dlr.sc.virsat.model.extension.ps.model.AssemblyTree;
 import de.dlr.sc.virsat.model.extension.ps.model.ConfigurationTree;
-import de.dlr.sc.virsat.model.extension.ps.model.ProductTree;
 import de.dlr.sc.virsat.project.editingDomain.VirSatEditingDomainRegistry;
 import de.dlr.sc.virsat.project.editingDomain.VirSatTransactionalEditingDomain;
 import de.dlr.sc.virsat.project.resources.VirSatProjectResource;
@@ -325,64 +321,145 @@ public class VariantSelectionPage extends WizardPage {
 
 		
 		/*
-		 * Translate to CNF
+		 * Translate to cnf
 		 
-		Map<String, Function<Integer, Boolean>> cnfMapper = Map.of(
-				"OR", null
-				);
+			r is root feature | r
+			p is parent of feature c | c -> p
+			m is mandatory subfeature of p | p -> m
+			p is the parent of [1..n] grouped features g1, ... , gn | p -> (g1 V ... V gn)
+			p is parent of [1..1] grouped features g1, ... , gn | p -> 1-of-n(g1, ... , gn)
+			Cross-tree constraint c requires p | c -> p
+			Cross-tree constraint c excludes p | c -> -p
 		*/
 		
 		/*
-		 * Create SAT solver
+		 * De Morgan.
+		 * 
+		 * A <=> B        : (A => B) AND (B => A)
+		 * A => B         : NOT(A) OR B
+		 *
 		 */
-		Model model = new Model("d");
+		
 		
 		/*
-		 * Iterate through feature tree with breadth-first search to handle one level of child-features at once
+		 * Map the features to CNF variables.
 		 */
-		///TODO CONTINUE HERE WITH ANALYZING THE PROPERTY ACCESS
+		// Two maps to improve performance
+		Map<Integer, StructuralElementInstance> variableToFeature = new HashMap<>();
+		Map<StructuralElementInstance, Integer> featureToVariable = new HashMap<>();
+		
+		// put root feature
+		variableToFeature.put(1, featureTree);
+		featureToVariable.put(featureTree, 1);
+		
+		// next variable is number 2
+		int variableCounter = 2;
 		
 		for (StructuralElementInstance feature : featureTree.getDeepChildren()) {
+			variableToFeature.put(variableCounter, feature);
+			featureToVariable.put(feature, variableCounter);
+			variableCounter++;
+		}
+		
+		/*
+		 * Use DimacStringSolver to safely build a DIMACS file.
+		 */
+		DimacsStringSolver dimacsStringSolver = new DimacsStringSolver();
+		
+		/*
+		 * Iterate through the features and view every feature as child node.
+		 */
+		for (Entry<Integer, StructuralElementInstance> feature : variableToFeature.entrySet()) {
 			
-			Queue<StructuralElementInstance> features = new LinkedList<>();
-			Queue<StructuralElementInstance> seen = new LinkedList<>();
-			features.add(featureTree);
-			seen.add(featureTree);
+			/*
+			 * feature.getKey() = variable for the clauses
+			 * feature.getValue() = structuralElementInstance for handling
+			 */
 			
-			while (!features.isEmpty()) {
-				StructuralElementInstance node = features.poll();
+			// root is not a child
+			if (feature.getKey() == 1) {
+				continue;
+			}
+			
+			
+			/*
+			 * CategoryAssignments of feature.
+			 */
+			Optional<CategoryAssignment> optionalRelationship = feature.getValue().getCategoryAssignments().stream()
+					.filter(ca -> ca.getType().getName().equals("Optional"))
+					.findAny();
+			
+			Optional<CategoryAssignment> crossTreeConstraint = feature.getValue().getCategoryAssignments().stream()
+					.filter(ca -> ca.getType().getName().equals("CrossTreeConstraint"))
+					.findAny();
+			
+			/*
+			 * SubFeatureRelationship of parent.
+			 */
+			StructuralElementInstance parent = feature.getValue().getParent();
+			Optional<CategoryAssignment> parentSubFeatureRelationship = parent.getCategoryAssignments().stream()
+					.filter(ca -> ca.getType().getName().equals("SubFeatureRelationship"))
+					.findAny();
+			
+			/*
+			 * Handle SubFeatureRelationship.
+			 */
+			if (parentSubFeatureRelationship.isPresent()) {
+				
+				
+				
+			/*
+			 * Create new clauses when the parent has no subfeatureRelationship which affects this feature.
+			 */
+			} else {
+				
+				boolean optionalFlagSet = true;
 				
 				/*
-				 * Mandatory
+				 * Handle Optional.
 				 */
+				if (optionalRelationship.isPresent()) {
 				
-				/*
-				 * Optional
-				 */
-				
-				/*
-				 * Handle SubfeatureRelationships
-				 */
-				Optional<CategoryAssignment> category = node.getCategoryAssignments().stream().filter(cat -> cat.getType().getName().equals("SubFeatureRelationship")).findAny();
-				
-				if (category.isPresent() && !node.getChildren().isEmpty()) {
-					Queue<String> subFeatures = new LinkedList<>();
+					OptionalRelationship optionalInstance = new OptionalRelationship(optionalRelationship.get());
 					
-					for (StructuralElementInstance child : node.getChildren()) {
-						if (!seen.contains(child)) {
-							features.add(child);
-							seen.add(child);
-							// add to SAT model
-							subFeatures.add(child.getUuid().toString());
+					// check if value is "true", else the relationship is mandatory
+					if (optionalInstance.getIsOptional()) { 
+						handleOptional(featureToVariable.get(parent), feature.getKey(), dimacsStringSolver); 
+					} 
+					else {
+						optionalFlagSet = false; 
+					}			
+					
+				/*
+				 * If either no optionalRelationship is defined or it is set to false, we assume the relationship is mandatory.
+				 */
+				} else if (optionalRelationship.isEmpty() || !optionalFlagSet) {
+					handleMandatory(featureToVariable.get(parent), feature.getKey(), dimacsStringSolver);
+				}
+				
+			}
+			
+			/*
+			 * Handle CrossTreeConstraint.
+			 */
+			if (crossTreeConstraint.isPresent()) {
+				
+				CrossTreeConstraint crossTreeConstraintInstance = new CrossTreeConstraint(crossTreeConstraint.get());
+				
+				if (crossTreeConstraintInstance.getReferenceUuid() != null) {
+					
+					// get other feature variable by uuid
+					int referencedFeatureVariable = 0;
+					for (Entry<Integer, StructuralElementInstance> otherFeature : variableToFeature.entrySet()) {
+						if (otherFeature.getValue().getUuid().toString().equals(crossTreeConstraintInstance.getReferenceUuid())) {
+							referencedFeatureVariable = otherFeature.getKey();
 						}
 					}
-					EnumUnitPropertyInstanceImpl relationshipProperty = ((EnumUnitPropertyInstanceImpl) category.get().getPropertyInstances().get(0));
-					switch (relationshipProperty.getValue().getValue()) { 
-					case "OR": model.boolVar(subFeatures.peek()).or(model.boolVar(subFeatures.peek()), model.boolVar(subFeatures.peek())).post();
-					case "AND": model.boolVar(subFeatures.peek()).and(model.boolVar(subFeatures.peek()), model.boolVar(subFeatures.peek())).post();
-					case "XOR": model.boolVar(subFeatures.peek()).xor(model.boolVar(subFeatures.peek()), model.boolVar(subFeatures.peek())).post();
-					}
 					
+					switch (crossTreeConstraintInstance.getCharacter()) {
+						case "Requires" -> handleRequires(referencedFeatureVariable, feature.getKey(), dimacsStringSolver);
+						case "Excludes" -> handleExcludes(referencedFeatureVariable, feature.getKey(), dimacsStringSolver);
+					}
 				}
 			}
 		}
@@ -390,8 +467,64 @@ public class VariantSelectionPage extends WizardPage {
 		
 		
 		/*
+		 * Create DIMACS.
+		 */
+		System.out.println(dimacsStringSolver.getOut());
+		
+		/*
+		 * Create SAT solver
+		 */
+		
+		ISolver solver = SolverFactory.newDefault();	
+		
+		
+		/*
 		 * Solve until all solutions are found
 		 */
+	}
+	
+	/*
+	 * Handle mandatory relationship.
+	 */
+	public void handleMandatory(int parentVariable, int childVariable, DimacsStringSolver dimacsStringSolver) {
+		try {
+			dimacsStringSolver.addClause(new VecInt(new int[]{parentVariable, childVariable}));
+			dimacsStringSolver.addClause(new VecInt(new int[]{childVariable, parentVariable}));
+		} catch (ContradictionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * Handle optional relationship.
+	 */
+	public void handleOptional(int parentVariable, int childVariable, DimacsStringSolver dimacsStringSolver) {
+		try {
+			dimacsStringSolver.addClause(new VecInt(new int[]{-childVariable, parentVariable}));
+		} catch (ContradictionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * Handle requires cross tree constraint.
+	 */
+	public void handleRequires(int requiredVariable, int optionalVariable, DimacsStringSolver dimacsStringSolver) {
+		handleOptional(requiredVariable, optionalVariable, dimacsStringSolver);
+	}
+	
+	/*
+	 * Handle excludes cross tree constraint.
+	 */
+	public void handleExcludes(int excludedVariable, int thisVariable, DimacsStringSolver dimacsStringSolver) {
+		try {
+			dimacsStringSolver.addClause(new VecInt(new int[]{-excludedVariable, -thisVariable}));
+		} catch (ContradictionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/**

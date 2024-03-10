@@ -20,6 +20,14 @@
 		pathToImage="resources/icons/SubFeatureRelationship.gif">
 	</conceptImage>
 	<conceptImage
+		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.OptionalRelationship"
+		pathToImage="resources/icons/OptionalRelationship.gif">
+	</conceptImage>
+	<conceptImage
+		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.CrossTreeConstraint"
+		pathToImage="resources/icons/CrossTreeConstraint.gif">
+	</conceptImage>
+	<conceptImage
 		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.FeatureTree"
 		pathToImage="resources/icons/FeatureTree.gif">
 	</conceptImage>
@@ -32,6 +40,14 @@
 	<command
 		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSubFeatureRelationship"
 		name="Add SubFeatureRelationship">
+	</command>
+	<command
+		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddOptionalRelationship"
+		name="Add OptionalRelationship">
+	</command>
+	<command
+		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddCrossTreeConstraint"
+		name="Add CrossTreeConstraint">
 	</command>
 	<command
 		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddFeatureTree"
@@ -49,6 +65,16 @@
 	      icon="resources/icons/SubFeatureRelationship.gif">
 	</image>
 	<image
+	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddOptionalRelationship"
+	      disabledIcon="resources/icons/OptionalRelationship_disabled.gif"
+	      icon="resources/icons/OptionalRelationship.gif">
+	</image>
+	<image
+	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddCrossTreeConstraint"
+	      disabledIcon="resources/icons/CrossTreeConstraint_disabled.gif"
+	      icon="resources/icons/CrossTreeConstraint.gif">
+	</image>
+	<image
 	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddFeatureTree"
 	      disabledIcon="resources/icons/FeatureTree_disabled.gif"
 	      icon="resources/icons/FeatureTree.gif">
@@ -63,6 +89,14 @@
 	<handler
 		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddSubFeatureRelationshipHandler"
 		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSubFeatureRelationship">
+	</handler>
+	<handler
+		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddOptionalRelationshipHandler"
+		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddOptionalRelationship">
+	</handler>
+	<handler
+		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddCrossTreeConstraintHandler"
+		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddCrossTreeConstraint">
 	</handler>
 	<handler
 		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddStructuralElementInstanceFeatureTreeHandler"
@@ -119,6 +153,50 @@
 			locationURI="popup:de.dlr.sc.virsat.model.extension.fosd.menu?after=categories">
 		<command
 			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddSubFeatureRelationship"
+			style="push">
+			<visibleWhen
+				checkEnabled="true">
+				<with
+					variable="selection">
+					<iterate
+						ifEmpty="false"
+						operator="and">
+						<test 
+							property="de.dlr.sc.virsat.model.extension.fosd.ui.propertyTester.conceptEnabled"
+							value="true" 
+							forcePluginActivation="true">
+						</test>		
+						<instanceof
+							value="de.dlr.sc.virsat.model.dvlm.categories.ICategoryAssignmentContainer">
+						</instanceof>
+					</iterate>
+				</with>
+			</visibleWhen>
+		</command>
+		<command
+			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddOptionalRelationship"
+			style="push">
+			<visibleWhen
+				checkEnabled="true">
+				<with
+					variable="selection">
+					<iterate
+						ifEmpty="false"
+						operator="and">
+						<test 
+							property="de.dlr.sc.virsat.model.extension.fosd.ui.propertyTester.conceptEnabled"
+							value="true" 
+							forcePluginActivation="true">
+						</test>		
+						<instanceof
+							value="de.dlr.sc.virsat.model.dvlm.categories.ICategoryAssignmentContainer">
+						</instanceof>
+					</iterate>
+				</with>
+			</visibleWhen>
+		</command>
+		<command
+			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddCrossTreeConstraint"
 			style="push">
 			<visibleWhen
 				checkEnabled="true">
@@ -225,6 +303,26 @@
 		      id="de.dlr.sc.virsat.model.extension.fosd.section.uiSnippetSubFeatureRelationship"
 		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
 		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionSubFeatureRelationship">
+		</uiSnippet>
+		<uiSnippet
+		      id="de.dlr.sc.virsat.model.extension.fosd.table.uiSnippetOptionalRelationship"
+		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
+		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetTableOptionalRelationship">
+		</uiSnippet>
+		<uiSnippet
+		      id="de.dlr.sc.virsat.model.extension.fosd.section.uiSnippetOptionalRelationship"
+		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
+		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionOptionalRelationship">
+		</uiSnippet>
+		<uiSnippet
+		      id="de.dlr.sc.virsat.model.extension.fosd.table.uiSnippetCrossTreeConstraint"
+		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
+		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetTableCrossTreeConstraint">
+		</uiSnippet>
+		<uiSnippet
+		      id="de.dlr.sc.virsat.model.extension.fosd.section.uiSnippetCrossTreeConstraint"
+		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
+		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionCrossTreeConstraint">
 		</uiSnippet>
 	</extension>
 	<!-- Plugin.XML Protected Region Start -->

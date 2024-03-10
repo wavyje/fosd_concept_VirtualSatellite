@@ -15,10 +15,22 @@ Concept de.dlr.sc.virsat.model.extension.fosd displayname "Feature-oriented deve
 	}
 	
 	// --- SubFeatureRelationship ---
-	Category SubFeatureRelationship description "Category to describe the relationship of the subfeatures" {
+	Category SubFeatureRelationship description "Category to describe the relationship of the subfeatures." {
 		Applicable For [Feature];
 		Cardinality 1;
-		EnumProperty type values [enumValue1 = "AND", enumValue2 = "OR", enumValue3 = "XOR"];
+		EnumProperty type values [enumValue1 = "OR", enumValue3 = "XOR"];
+	}
+	
+	Category OptionalRelationship description "Use this to mark the feature as optional." {
+		Applicable For [Feature];
+		Cardinality 1;
+		BooleanProperty isOptional default true;
+	}
+	
+	Category CrossTreeConstraint description "Reference to another feature and character of relationship." {
+		Applicable For [Feature];
+		StringProperty referenceUuid;
+		EnumProperty character values [enumValue1 = "REQUIRES", enumValue2 = "EXCLUDES"];
 	}
 	
 }

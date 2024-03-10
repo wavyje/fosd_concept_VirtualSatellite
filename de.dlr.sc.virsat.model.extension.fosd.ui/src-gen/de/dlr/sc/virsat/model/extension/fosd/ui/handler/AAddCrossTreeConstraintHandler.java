@@ -15,17 +15,17 @@ import org.eclipse.emf.common.command.Command;
 import org.eclipse.emf.ecore.EObject;
 
 import de.dlr.sc.virsat.project.ui.transactional.handler.ATransactionalAddCategoryHandler;
-import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelationshipCommand;
+import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddCrossTreeConstraintCommand;
 
 /**
  * Auto Generated Abstract Generator Gap Class
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Reference to another feature and character of relationship.
  * 
  */	
-public abstract class AAddSubFeatureRelationshipHandler extends ATransactionalAddCategoryHandler {
+public abstract class AAddCrossTreeConstraintHandler extends ATransactionalAddCategoryHandler {
 	
 	@Override
 	protected String getConceptName() {
@@ -34,6 +34,6 @@ public abstract class AAddSubFeatureRelationshipHandler extends ATransactionalAd
 	
 	@Override
 	protected Command createAddCommand(EditingDomain editingDomain, EObject owner, Concept activeConcept) {
-		return new CreateAddSubFeatureRelationshipCommand().create(editingDomain, owner, activeConcept);
+		return new CreateAddCrossTreeConstraintCommand().create(editingDomain, owner, activeConcept);
 	}
 }

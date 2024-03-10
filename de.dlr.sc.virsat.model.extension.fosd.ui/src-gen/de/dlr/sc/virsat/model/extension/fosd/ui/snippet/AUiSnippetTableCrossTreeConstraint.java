@@ -14,7 +14,7 @@ import org.eclipse.emf.edit.domain.EditingDomain;
 import org.eclipse.emf.common.command.Command;
 import de.dlr.sc.virsat.uiengine.ui.editor.snippets.IUiSnippet;
 import de.dlr.sc.virsat.uiengine.ui.editor.snippets.AUiSnippetGenericCategoryAssignmentTable;
-import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelationshipCommand;
+import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddCrossTreeConstraintCommand;
 
 ;
 
@@ -23,19 +23,19 @@ import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelat
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Reference to another feature and character of relationship.
  * 
  */	
-public abstract class AUiSnippetTableSubFeatureRelationship extends AUiSnippetGenericCategoryAssignmentTable implements IUiSnippet {
-	public AUiSnippetTableSubFeatureRelationship() {
+public abstract class AUiSnippetTableCrossTreeConstraint extends AUiSnippetGenericCategoryAssignmentTable implements IUiSnippet {
+	public AUiSnippetTableCrossTreeConstraint() {
 		super("de.dlr.sc.virsat.model.extension.fosd",
-			"SubFeatureRelationship",
-			"de.dlr.sc.virsat.model.extension.fosd.SubFeatureRelationship",
+			"CrossTreeConstraint",
+			"de.dlr.sc.virsat.model.extension.fosd.CrossTreeConstraint",
 			STYLE_ADD_BUTTON | STYLE_REMOVE_BUTTON | STYLE_EDITOR_BUTTON);
 	}
 
 	@Override
 	protected Command createAddCommand(EditingDomain editingDomain, Concept activeConcept) {
-		return new CreateAddSubFeatureRelationshipCommand().create(editingDomain, model, activeConcept);
+		return new CreateAddCrossTreeConstraintCommand().create(editingDomain, model, activeConcept);
 	}
 }

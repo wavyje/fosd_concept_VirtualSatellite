@@ -14,15 +14,15 @@ package de.dlr.sc.virsat.model.extension.fosd.model;
 // *****************************************************************
 import javax.xml.bind.annotation.XmlAccessorType;
 import de.dlr.sc.virsat.model.concept.types.category.IBeanCategoryAssignment;
-import de.dlr.sc.virsat.model.concept.types.property.BeanPropertyEnum;
 import de.dlr.sc.virsat.model.dvlm.concepts.util.ActiveConceptHelper;
-import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.EnumUnitPropertyInstance;
+import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.ValuePropertyInstance;
 import javax.xml.bind.annotation.XmlRootElement;
 import de.dlr.sc.virsat.model.dvlm.categories.util.CategoryInstantiator;
 import de.dlr.sc.virsat.model.dvlm.categories.Category;
 import javax.xml.bind.annotation.XmlAccessType;
 import de.dlr.sc.virsat.model.dvlm.concepts.Concept;
 import org.eclipse.emf.edit.domain.EditingDomain;
+import de.dlr.sc.virsat.model.concept.types.property.BeanPropertyBoolean;
 import org.eclipse.emf.common.command.Command;
 import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.ext.core.model.GenericCategory;
@@ -38,14 +38,14 @@ import javax.xml.bind.annotation.XmlElement;
  * 
  * Don't Manually modify this class
  * 
- * Category to describe the relationship of the subfeatures.
+ * Use this to mark the feature as optional.
  * 
  */	
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.NONE)
-public abstract class ASubFeatureRelationship extends GenericCategory implements IBeanCategoryAssignment {
+public abstract class AOptionalRelationship extends GenericCategory implements IBeanCategoryAssignment {
 
-	public static final String FULL_QUALIFIED_CATEGORY_NAME = "de.dlr.sc.virsat.model.extension.fosd.SubFeatureRelationship";
+	public static final String FULL_QUALIFIED_CATEGORY_NAME = "de.dlr.sc.virsat.model.extension.fosd.OptionalRelationship";
 	
 	/**
  	* Call this method to get the full qualified name of the underlying category
@@ -56,69 +56,58 @@ public abstract class ASubFeatureRelationship extends GenericCategory implements
 	}
 	
 	// property name constants
-	public static final String PROPERTY_TYPE = "type";
+	public static final String PROPERTY_ISOPTIONAL = "isOptional";
 	
-	// Type enumeration value names
-	public static final String TYPE_enumValue1_NAME = "enumValue1";
-	public static final String TYPE_enumValue3_NAME = "enumValue3";
-	// Type enumeration values
-	public static final String TYPE_enumValue1_VALUE = "OR";
-	public static final String TYPE_enumValue3_VALUE = "XOR";
 	
 	
 	// *****************************************************************
 	// * Class Constructors
 	// *****************************************************************
 	
-	public ASubFeatureRelationship() {
+	public AOptionalRelationship() {
 	}
 	
-	public ASubFeatureRelationship(Concept concept) {
-		Category categoryFromActiveCategories = ActiveConceptHelper.getCategory(concept, "SubFeatureRelationship");
-		CategoryAssignment categoryAssignement = new CategoryInstantiator().generateInstance(categoryFromActiveCategories, "SubFeatureRelationship");
+	public AOptionalRelationship(Concept concept) {
+		Category categoryFromActiveCategories = ActiveConceptHelper.getCategory(concept, "OptionalRelationship");
+		CategoryAssignment categoryAssignement = new CategoryInstantiator().generateInstance(categoryFromActiveCategories, "OptionalRelationship");
 		setTypeInstance(categoryAssignement);
 	}
 	
-	public ASubFeatureRelationship(CategoryAssignment categoryAssignement) {
+	public AOptionalRelationship(CategoryAssignment categoryAssignement) {
 		setTypeInstance(categoryAssignement);
 	}
 	
 	
 	// *****************************************************************
-	// * Attribute: type
+	// * Attribute: isOptional
 	// *****************************************************************
-	private BeanPropertyEnum type = new BeanPropertyEnum();
+	private BeanPropertyBoolean isOptional = new BeanPropertyBoolean();
 	
-	private void safeAccessType() {
-		if (type.getTypeInstance() == null) {
-			type.setTypeInstance((EnumUnitPropertyInstance) helper.getPropertyInstance("type"));
+	private void safeAccessIsOptional() {
+		if (isOptional.getTypeInstance() == null) {
+			isOptional.setTypeInstance((ValuePropertyInstance) helper.getPropertyInstance("isOptional"));
 		}
 	}
 	
-	public Command setType(EditingDomain ed, String value) {
-		safeAccessType();
-		return this.type.setValue(ed, value);
+	public Command setIsOptional(EditingDomain ed, boolean value) {
+		safeAccessIsOptional();
+		return this.isOptional.setValue(ed, value);
 	}
 	
-	public void setType(String value) {
-		safeAccessType();
-		this.type.setValue(value);
+	public void setIsOptional(boolean value) {
+		safeAccessIsOptional();
+		this.isOptional.setValue(value);
 	}
 	
-	public String getType() {
-		safeAccessType();
-		return type.getValue();
-	}
-	
-	public double getTypeEnum() {
-		safeAccessType();
-		return type.getEnumValue();
+	public boolean getIsOptional() {
+		safeAccessIsOptional();
+		return isOptional.getValue();
 	}
 	
 	@XmlElement
-	public BeanPropertyEnum getTypeBean() {
-		safeAccessType();
-		return type;
+	public BeanPropertyBoolean getIsOptionalBean() {
+		safeAccessIsOptional();
+		return isOptional;
 	}
 	
 	

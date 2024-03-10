@@ -10,19 +10,15 @@
 package de.dlr.sc.virsat.model.extension.fosd.ui.snippet;
 
 import de.dlr.sc.virsat.uiengine.ui.editor.snippets.IUiSnippet;
-import de.dlr.sc.virsat.uiengine.ui.editor.snippets.AUiSnippetGenericPropertyInstances;
 
 
 /**
- * Auto Generated Abstract Generator Gap Class
+ * Auto Generated Class inheriting from Generator Gap Class
  * 
- * Don't Manually modify this class
+ * This class is generated once, do your changes here
  * 
- * Category to describe the relationship of the subfeatures.
+ * Use this to mark the feature as optional.
  * 
- */	
-public abstract class AUiSnippetSectionSubFeatureRelationship extends AUiSnippetGenericPropertyInstances implements IUiSnippet {
-	public AUiSnippetSectionSubFeatureRelationship() {
-		super("de.dlr.sc.virsat.model.extension.fosd", "SubFeatureRelationship");
-	}
+ */
+public class UiSnippetSectionOptional extends AUiSnippetSectionOptional implements IUiSnippet {
 }
