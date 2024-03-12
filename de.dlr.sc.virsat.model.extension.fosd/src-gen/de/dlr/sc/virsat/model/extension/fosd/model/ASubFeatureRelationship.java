@@ -56,14 +56,14 @@ public abstract class ASubFeatureRelationship extends GenericCategory implements
 	}
 	
 	// property name constants
-	public static final String PROPERTY_TYPE = "type";
+	public static final String PROPERTY_CHARACTER = "character";
 	
-	// Type enumeration value names
-	public static final String TYPE_enumValue1_NAME = "enumValue1";
-	public static final String TYPE_enumValue3_NAME = "enumValue3";
-	// Type enumeration values
-	public static final String TYPE_enumValue1_VALUE = "OR";
-	public static final String TYPE_enumValue3_VALUE = "XOR";
+	// Character enumeration value names
+	public static final String CHARACTER_or_NAME = "or";
+	public static final String CHARACTER_xor_NAME = "xor";
+	// Character enumeration values
+	public static final String CHARACTER_or_VALUE = "OR";
+	public static final String CHARACTER_xor_VALUE = "XOR";
 	
 	
 	// *****************************************************************
@@ -85,40 +85,40 @@ public abstract class ASubFeatureRelationship extends GenericCategory implements
 	
 	
 	// *****************************************************************
-	// * Attribute: type
+	// * Attribute: character
 	// *****************************************************************
-	private BeanPropertyEnum type = new BeanPropertyEnum();
+	private BeanPropertyEnum character = new BeanPropertyEnum();
 	
-	private void safeAccessType() {
-		if (type.getTypeInstance() == null) {
-			type.setTypeInstance((EnumUnitPropertyInstance) helper.getPropertyInstance("type"));
+	private void safeAccessCharacter() {
+		if (character.getTypeInstance() == null) {
+			character.setTypeInstance((EnumUnitPropertyInstance) helper.getPropertyInstance("character"));
 		}
 	}
 	
-	public Command setType(EditingDomain ed, String value) {
-		safeAccessType();
-		return this.type.setValue(ed, value);
+	public Command setCharacter(EditingDomain ed, String value) {
+		safeAccessCharacter();
+		return this.character.setValue(ed, value);
 	}
 	
-	public void setType(String value) {
-		safeAccessType();
-		this.type.setValue(value);
+	public void setCharacter(String value) {
+		safeAccessCharacter();
+		this.character.setValue(value);
 	}
 	
-	public String getType() {
-		safeAccessType();
-		return type.getValue();
+	public String getCharacter() {
+		safeAccessCharacter();
+		return character.getValue();
 	}
 	
-	public double getTypeEnum() {
-		safeAccessType();
-		return type.getEnumValue();
+	public double getCharacterEnum() {
+		safeAccessCharacter();
+		return character.getEnumValue();
 	}
 	
 	@XmlElement
-	public BeanPropertyEnum getTypeBean() {
-		safeAccessType();
-		return type;
+	public BeanPropertyEnum getCharacterBean() {
+		safeAccessCharacter();
+		return character;
 	}
 	
 	

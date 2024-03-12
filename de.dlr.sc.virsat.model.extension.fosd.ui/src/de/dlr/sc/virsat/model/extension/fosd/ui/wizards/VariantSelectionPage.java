@@ -9,10 +9,15 @@
  *******************************************************************************/
 package de.dlr.sc.virsat.model.extension.fosd.ui.wizards;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ReflectiveItemProviderAdapterFactory;
@@ -48,8 +53,12 @@ import org.sat4j.core.VecInt;
 import org.sat4j.minisat.SolverFactory;
 import org.sat4j.specs.ContradictionException;
 import org.sat4j.specs.ISolver;
+import org.sat4j.specs.IVecInt;
+import org.sat4j.specs.TimeoutException;
 import org.sat4j.tools.DimacsStringSolver;
+import org.sat4j.tools.ModelIterator;
 
+import de.dlr.sc.virsat.model.concept.types.structural.IBeanStructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.Repository;
 import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.categories.propertydefinitions.provider.PropertydefinitionsItemProviderAdapterFactory;
@@ -95,6 +104,7 @@ public class VariantSelectionPage extends WizardPage {
 	private Composite content;
 	private StructuralElementInstance sc;
 	private StructuralElementInstance sei;
+	private List<ConfigurationTree> validConfigurations;
 	private boolean generateAsConfigurationTree;
 	private Text treeName;
 	private Tree tree;
@@ -126,7 +136,7 @@ public class VariantSelectionPage extends WizardPage {
 		 */
 		
 		if (generateAsConfigurationTree) {
-			this.getAllValidVariants(sc);
+			validConfigurations = this.getAllValidVariants(sc);
 		}
 		
 		content = new Composite(parent, SWT.NONE);
@@ -234,13 +244,13 @@ public class VariantSelectionPage extends WizardPage {
 		treeViewer.setContentProvider(filteredCP);
 		treeViewer.setLabelProvider(lp);	
 		// create the new Structural element 
-		StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
+		StructuralElementInstance sc = (StructuralElementInstance) validConfigurations.get(0);
 		this.ed = VirSatEditingDomainRegistry.INSTANCE.getEd(sc); 
 		VirSatResourceSet virSatResourceSet = ed.getResourceSet();
 		this.rep = virSatResourceSet.getRepository();
 		
 	
-			ConfigurationTree at = (ConfigurationTree) ProductStructureHelper.createTreeModel(sc);
+			ConfigurationTree at = validConfigurations.get(0);
 			this.sei = at.getStructuralElementInstance();
 			treeViewer.setInput(at.getStructuralElementInstance());
 	
@@ -317,7 +327,7 @@ public class VariantSelectionPage extends WizardPage {
 	/*
 	 * Get all valid configurations
 	 */
-	public void getAllValidVariants(StructuralElementInstance featureTree) {
+	public List<ConfigurationTree> getAllValidVariants(StructuralElementInstance featureTree) {
 
 		
 		/*
@@ -364,7 +374,10 @@ public class VariantSelectionPage extends WizardPage {
 		/*
 		 * Use DimacStringSolver to safely build a DIMACS file.
 		 */
-		DimacsStringSolver dimacsStringSolver = new DimacsStringSolver();
+		ISolver solver = new ModelIterator(SolverFactory.newDefault());
+		
+		// List for preventing duplicated subfeatureRealtionship clauses
+		List<Integer> existingSubFeatureRelationships = new ArrayList<Integer>();
 		
 		/*
 		 * Iterate through the features and view every feature as child node.
@@ -386,7 +399,7 @@ public class VariantSelectionPage extends WizardPage {
 			 * CategoryAssignments of feature.
 			 */
 			Optional<CategoryAssignment> optionalRelationship = feature.getValue().getCategoryAssignments().stream()
-					.filter(ca -> ca.getType().getName().equals("Optional"))
+					.filter(ca -> ca.getType().getName().equals("OptionalRelationship"))
 					.findAny();
 			
 			Optional<CategoryAssignment> crossTreeConstraint = feature.getValue().getCategoryAssignments().stream()
@@ -406,7 +419,24 @@ public class VariantSelectionPage extends WizardPage {
 			 */
 			if (parentSubFeatureRelationship.isPresent()) {
 				
+				SubFeatureRelationship subFeatureRelationship = new SubFeatureRelationship(parentSubFeatureRelationship.get());
 				
+				if (subFeatureRelationship.getCharacter() != null && !existingSubFeatureRelationships.contains(feature.getKey())) {
+					int[] subFeatureVariables = parent.getChildren().stream().mapToInt(child -> featureToVariable.get(child)).toArray();
+					
+					int[] subFeaturePlusParent = new int[subFeatureVariables.length+1];
+					for (int i = 0; i < subFeatureVariables.length; i++) {
+						subFeaturePlusParent[i] = subFeatureVariables[i];
+					}
+					subFeaturePlusParent[subFeaturePlusParent.length-1] = featureToVariable.get(parent);
+					
+					switch(subFeatureRelationship.getCharacter()) {
+						case "xor" -> handleXor(subFeaturePlusParent, solver);
+						case "or" -> handleOr(subFeaturePlusParent, solver);
+					}
+					
+					existingSubFeatureRelationships.addAll(IntStream.of(subFeatureVariables).boxed().collect(Collectors.toList()));
+				}
 				
 			/*
 			 * Create new clauses when the parent has no subfeatureRelationship which affects this feature.
@@ -424,7 +454,7 @@ public class VariantSelectionPage extends WizardPage {
 					
 					// check if value is "true", else the relationship is mandatory
 					if (optionalInstance.getIsOptional()) { 
-						handleOptional(featureToVariable.get(parent), feature.getKey(), dimacsStringSolver); 
+						handleOptional(featureToVariable.get(parent), feature.getKey(), solver); 
 					} 
 					else {
 						optionalFlagSet = false; 
@@ -434,7 +464,7 @@ public class VariantSelectionPage extends WizardPage {
 				 * If either no optionalRelationship is defined or it is set to false, we assume the relationship is mandatory.
 				 */
 				} else if (optionalRelationship.isEmpty() || !optionalFlagSet) {
-					handleMandatory(featureToVariable.get(parent), feature.getKey(), dimacsStringSolver);
+					handleMandatory(featureToVariable.get(parent), feature.getKey(), solver);
 				}
 				
 			}
@@ -457,39 +487,56 @@ public class VariantSelectionPage extends WizardPage {
 					}
 					
 					switch (crossTreeConstraintInstance.getCharacter()) {
-						case "Requires" -> handleRequires(referencedFeatureVariable, feature.getKey(), dimacsStringSolver);
-						case "Excludes" -> handleExcludes(referencedFeatureVariable, feature.getKey(), dimacsStringSolver);
+						case "Requires" -> handleRequires(referencedFeatureVariable, feature.getKey(), solver);
+						case "Excludes" -> handleExcludes(referencedFeatureVariable, feature.getKey(), solver);
 					}
 				}
 			}
 		}
 		
 		
-		
-		/*
-		 * Create DIMACS.
-		 */
-		System.out.println(dimacsStringSolver.getOut());
-		
-		/*
-		 * Create SAT solver
-		 */
-		
-		ISolver solver = SolverFactory.newDefault();	
-		
-		
 		/*
 		 * Solve until all solutions are found
 		 */
+		 boolean unsat = true;
+		 List<int[]> models = new ArrayList<>();
+		 try {
+			while (solver.isSatisfiable()) {
+			 unsat = false;
+			 models.add(solver.model());
+			 // do something with model
+			 }
+		} catch (TimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		 if (unsat) {
+		     // UNSAT case
+		 }
+		 
+		 List<ConfigurationTree> validConfigurations = new ArrayList<>(); 
+		 
+		 for (int[] model : models) {
+			 ConfigurationTree ft = (ConfigurationTree) ProductStructureHelper.createTreeModel(featureTree);
+			 for (int i = 0; i < model.length; i++) {
+				 if (model[i] < 0) {
+					 IBeanStructuralElementInstance fe = ProductStructureHelper.createTreeModel(variableToFeature.get(Math.abs(model[i])));
+					 ft.remove(fe);
+				 }
+			 }
+			 validConfigurations.add(ft);
+		 }
+		 
+		 return validConfigurations;
 	}
 	
 	/*
 	 * Handle mandatory relationship.
 	 */
-	public void handleMandatory(int parentVariable, int childVariable, DimacsStringSolver dimacsStringSolver) {
+	public void handleMandatory(int parentVariable, int childVariable, ISolver solver) {
 		try {
-			dimacsStringSolver.addClause(new VecInt(new int[]{parentVariable, childVariable}));
-			dimacsStringSolver.addClause(new VecInt(new int[]{childVariable, parentVariable}));
+			solver.addClause(new VecInt(new int[]{-parentVariable, childVariable})).toString();
+			solver.addClause(new VecInt(new int[]{-childVariable, parentVariable})).toString();
 		} catch (ContradictionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -499,9 +546,9 @@ public class VariantSelectionPage extends WizardPage {
 	/*
 	 * Handle optional relationship.
 	 */
-	public void handleOptional(int parentVariable, int childVariable, DimacsStringSolver dimacsStringSolver) {
+	public void handleOptional(int parentVariable, int childVariable, ISolver solver) {
 		try {
-			dimacsStringSolver.addClause(new VecInt(new int[]{-childVariable, parentVariable}));
+			solver.addClause(new VecInt(new int[]{-childVariable, parentVariable}));
 		} catch (ContradictionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -511,19 +558,118 @@ public class VariantSelectionPage extends WizardPage {
 	/*
 	 * Handle requires cross tree constraint.
 	 */
-	public void handleRequires(int requiredVariable, int optionalVariable, DimacsStringSolver dimacsStringSolver) {
-		handleOptional(requiredVariable, optionalVariable, dimacsStringSolver);
+	public void handleRequires(int requiredVariable, int optionalVariable, ISolver solver) {
+		handleOptional(requiredVariable, optionalVariable, solver);
 	}
 	
 	/*
 	 * Handle excludes cross tree constraint.
 	 */
-	public void handleExcludes(int excludedVariable, int thisVariable, DimacsStringSolver dimacsStringSolver) {
+	public void handleExcludes(int excludedVariable, int thisVariable, ISolver solver) {
 		try {
-			dimacsStringSolver.addClause(new VecInt(new int[]{-excludedVariable, -thisVariable}));
+			solver.addClause(new VecInt(new int[]{-excludedVariable, -thisVariable}));
 		} catch (ContradictionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * Handle XOR relationship.
+	 */
+	public void handleXor(int[] subFeatures, ISolver solver) {
+		//solver.addParity(new VecInt(subFeatures), true).toString();
+		int[] children = new int[subFeatures.length-1];
+		
+		int parent = subFeatures[subFeatures.length-1];
+		
+		for (int i = 0; i < children.length; i++) {
+			children[i] = subFeatures[i];
+		}
+		
+		/*
+		 * Clause containing all subFeatures, form:
+		 * (child_1 or ... child_n or -parent)
+		 */
+		try {
+			int[] copy = subFeatures.clone();
+			copy[copy.length-1] = -copy[copy.length-1];
+			IVecInt v = new VecInt(copy);
+			solver.addClause(v);
+		} catch (ContradictionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		/*
+		 * Individual clauses for each child, form:
+		 * (-child_i or parent)
+		 */
+		
+		for (int i = 0; i < children.length; i++) {
+			try {
+				IVecInt v = new VecInt(new int[]{-children[i], parent});
+				solver.addClause(v);
+			} catch (ContradictionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		/*
+		 * Individual clauses to prevent children from being the same, form:
+		 * all_i<j(-child_i or -child_j)
+		 */
+		for (int i = 0; i < children.length; i++) {
+			for (int j = i+1; j < children.length; j++) {
+				try {
+					IVecInt v = new VecInt(new int[]{-children[i], -children[j]});
+					solver.addClause(v);
+				} catch (ContradictionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	/*
+	 * Handle OR relationship.
+	 */
+	public void handleOr(int[] subFeatures, ISolver solver) {
+		
+		int[] children = new int[subFeatures.length-1];
+		int parent = subFeatures[subFeatures.length-1];
+		
+		for (int i = 0; i < children.length; i++) {
+			children[i] = subFeatures[i];
+		}
+		
+		/*
+		 * Clause containing all subFeatures, form:
+		 * (child_1 or ... child_n or -parent)
+		 */
+		try {
+			int[] copy = subFeatures.clone();
+			copy[copy.length-1] = -copy[copy.length-1];
+			IVecInt v = new VecInt(copy);
+			solver.addClause(v);
+		} catch (ContradictionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		/*
+		 * Individual clauses for each child, form:
+		 * (-child_i or parent)
+		 */
+		for (int i = 0; i < children.length; i++) {
+			try {
+				IVecInt v = new VecInt(new int[]{-children[i], parent});
+				solver.addClause(v);
+			} catch (ContradictionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	

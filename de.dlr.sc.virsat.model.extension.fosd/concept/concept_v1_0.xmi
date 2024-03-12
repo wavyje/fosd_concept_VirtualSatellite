@@ -3,9 +3,9 @@
   <imports importedNamespace="de.dlr.sc.virsat.model.extension.ps.*"/>
   <imports importedNamespace="de.dlr.sc.virsat.model.ext.core.*"/>
   <categories name="SubFeatureRelationship" description="Category to describe the relationship of the subfeatures." applicableFor="de.dlr.sc.virsat.model.extension.fosd.Feature" cardinality="1">
-    <properties xsi:type="dvlm_cppd:EnumProperty" name="type">
-      <values name="enumValue1" value="OR"/>
-      <values name="enumValue3" value="XOR"/>
+    <properties xsi:type="dvlm_cppd:EnumProperty" name="character">
+      <values name="or" value="OR"/>
+      <values name="xor" value="XOR"/>
     </properties>
     <extendsCategory href="platform:/resource/de.dlr.sc.virsat.model.ext.core/concept/concept.xmi#de.dlr.sc.virsat.model.ext.core.GenericCategory"/>
   </categories>
