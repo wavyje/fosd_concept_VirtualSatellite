@@ -15,10 +15,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.emf.common.command.Command;
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ReflectiveItemProviderAdapterFactory;
 import org.eclipse.emf.edit.provider.resource.ResourceItemProviderAdapterFactory;
@@ -49,6 +54,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.ide.undo.DeleteResourcesOperation;
 import org.sat4j.core.VecInt;
 import org.sat4j.minisat.SolverFactory;
 import org.sat4j.specs.ContradictionException;
@@ -58,29 +64,40 @@ import org.sat4j.specs.TimeoutException;
 import org.sat4j.tools.DimacsStringSolver;
 import org.sat4j.tools.ModelIterator;
 
+import de.dlr.sc.virsat.model.concept.types.structural.ABeanStructuralElementInstance;
 import de.dlr.sc.virsat.model.concept.types.structural.IBeanStructuralElementInstance;
+import de.dlr.sc.virsat.model.concept.types.util.BeanStructuralElementInstanceHelper;
 import de.dlr.sc.virsat.model.dvlm.Repository;
 import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.categories.propertydefinitions.provider.PropertydefinitionsItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.provider.PropertyinstancesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.provider.DVLMCategoriesItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.concepts.Concept;
 import de.dlr.sc.virsat.model.dvlm.concepts.provider.ConceptsItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.concepts.util.ActiveConceptHelper;
 import de.dlr.sc.virsat.model.dvlm.general.provider.GeneralItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.provider.DVLMItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.roles.provider.RolesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
+import de.dlr.sc.virsat.model.dvlm.structural.StructuralFactory;
 import de.dlr.sc.virsat.model.dvlm.structural.provider.DVLMStructuralItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.units.provider.UnitsItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.util.DVLMCopier;
+import de.dlr.sc.virsat.model.extension.fosd.model.AFeature;
 import de.dlr.sc.virsat.model.extension.fosd.model.CrossTreeConstraint;
+import de.dlr.sc.virsat.model.extension.fosd.model.Feature;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
 import de.dlr.sc.virsat.model.extension.fosd.model.OptionalRelationship;
 import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
 import de.dlr.sc.virsat.model.extension.ps.model.ConfigurationTree;
+import de.dlr.sc.virsat.model.extension.ps.model.ElementConfiguration;
 import de.dlr.sc.virsat.project.editingDomain.VirSatEditingDomainRegistry;
 import de.dlr.sc.virsat.project.editingDomain.VirSatTransactionalEditingDomain;
 import de.dlr.sc.virsat.project.resources.VirSatProjectResource;
 import de.dlr.sc.virsat.project.resources.VirSatResourceSet;
+import de.dlr.sc.virsat.project.structure.command.CreateAddSeiWithFileStructureCommand;
+import de.dlr.sc.virsat.project.structure.command.CreateRemoveSeiWithFileStructureCommand;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatComposedContentProvider;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatFilteredWrappedTreeContentProvider;
 import de.dlr.sc.virsat.project.ui.labelProvider.VirSatComposedLabelProvider;
@@ -104,10 +121,13 @@ public class VariantSelectionPage extends WizardPage {
 	private Composite content;
 	private StructuralElementInstance sc;
 	private StructuralElementInstance sei;
-	private List<ConfigurationTree> validConfigurations;
+	Map<Integer, StructuralElementInstance> variableToFeature = new HashMap<>();
+	Map<StructuralElementInstance, Integer> featureToVariable = new HashMap<>();
+	private List<int[]> validConfigurations;
+	private StructuralElementInstance selectedConfiguration;
 	private boolean generateAsConfigurationTree;
 	private Text treeName;
-	private Tree tree;
+	private List<Tree> tree = new ArrayList<>();
 	private TreeEditor editor;
 	/**
 	 * Create a new Generate page
@@ -136,7 +156,7 @@ public class VariantSelectionPage extends WizardPage {
 		 */
 		
 		if (generateAsConfigurationTree) {
-			validConfigurations = this.getAllValidVariants(sc);
+			this.getAllValidVariants(sc);
 		}
 		
 		content = new Composite(parent, SWT.NONE);
@@ -163,43 +183,18 @@ public class VariantSelectionPage extends WizardPage {
 	    
 	    Composite composite = new Composite(content, SWT.NONE);
 	    composite.setLayout(new GridLayout(2, false));
-	    Button btnRename = new Button(composite, SWT.NONE);
-	    btnRename.addSelectionListener(new SelectionAdapter() {
+	    Button btnSelect = new Button(composite, SWT.NONE);
+	    btnSelect.addSelectionListener(new SelectionAdapter() {
 	    	@Override
 	    	public void widgetSelected(SelectionEvent e) {
-	    		// Identify the selected row
-	    		TreeItem[] items = tree.getSelection();
-
-	    		if (items[0] == null) {
-	    			return;
-	    		}
-	    		// The control that will be the editor must be a child of the Tree
-	    		Text newEditor = new Text(tree, SWT.NONE);
-	    		StructuralElementInstance temp = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
-	    		newEditor.setText(temp.getName());
-	    		newEditor.addModifyListener(new ModifyListener() {
-	    			public void modifyText(ModifyEvent e) {
-	    				Text text = (Text) editor.getEditor();
-	    				editor.getItem().setText(text.getText());
-	    				StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
-	    				sc.setName(text.getText());
-	    			}
-	    		});
-	    		newEditor.selectAll();
-	    		newEditor.setFocus();
-	    		editor.setEditor(newEditor, items[0]);
+	    		StructuralElementInstance select = ((StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement()).getParent();
+	    		
+	    		selectedConfiguration = select;
+	    		sei = selectedConfiguration;
 	    	}
 	    });
-	    btnRename.setText("Rename");
-	    Button btnDuplicate = new Button(composite, SWT.NONE);
-	    btnDuplicate.addSelectionListener(new SelectionAdapter() {
-	    	@Override
-	    	public void widgetSelected(SelectionEvent e) {
-	    		StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
-	    		ProductStructureHelper.duplicate(sc);
-	    	}
-	    });
-	    btnDuplicate.setText("Duplicate");
+	    btnSelect.setText("Select");
+	    
 	    new Label(content, SWT.NONE);
 	    Label lblTreeName = new Label(content, SWT.NONE);
 	    lblTreeName.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
@@ -210,9 +205,6 @@ public class VariantSelectionPage extends WizardPage {
 	    if (generateAsConfigurationTree) {
 	    	lblTreeName.setText("Configuration Tree Name");
 	    	treeName.setText(ConfigurationTree.class.getSimpleName());
-		} else {
-			lblTreeName.setText("Feature Tree Name");
-			treeName.setText(FeatureTree.class.getSimpleName());
 		}
 	   
 	}
@@ -221,9 +213,12 @@ public class VariantSelectionPage extends WizardPage {
 	 * Create the dialog for renaming and duplicating items
 	 */
 	private void createTreeUI() {
-			
-		TreeViewer treeViewer =  new TreeViewer(content, SWT.BORDER);
-		treeViewer.setComparator(new VirSatNavigatorSeiSorter());
+		
+		
+		//TreeViewer treeViewer =  new TreeViewer(content, SWT.BORDER);
+		
+		//treeViewer.setComparator(new VirSatNavigatorSeiSorter());
+	
 		VirSatComposedContentProvider cp = new VirSatComposedContentProvider();
 		cp.registerSubContentProvider(new VirSatWorkspaceContentProvider());
 		cp.registerSubContentProvider(new VirSatProjectContentProvider());
@@ -240,96 +235,88 @@ public class VariantSelectionPage extends WizardPage {
 		filteredCP.addClassFilter(StructuralElementInstance.class);
 		filteredCP.addClassFilter(Repository.class);
 		filteredCP.addClassFilter(VirSatProjectResource.class);
-		
-		treeViewer.setContentProvider(filteredCP);
-		treeViewer.setLabelProvider(lp);	
+
 		// create the new Structural element 
-		StructuralElementInstance sc = (StructuralElementInstance) validConfigurations.get(0);
+		StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
 		this.ed = VirSatEditingDomainRegistry.INSTANCE.getEd(sc); 
 		VirSatResourceSet virSatResourceSet = ed.getResourceSet();
 		this.rep = virSatResourceSet.getRepository();
 		
-	
-			ConfigurationTree at = validConfigurations.get(0);
-			this.sei = at.getStructuralElementInstance();
-			treeViewer.setInput(at.getStructuralElementInstance());
-	
-		treeViewer.expandAll();
-		tree = treeViewer.getTree();
-		tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
-		editor = new TreeEditor(tree);
+		/*
+		 * Build the tree models for the view based on the valid configurations.	
+		 */
+		List<StructuralElementInstance> treeModels = new ArrayList<>();
 		
-
-		editor.horizontalAlignment = SWT.LEFT;
-		editor.grabHorizontal = true;
-		tree.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				MenuManager menuMgr = new MenuManager();
-				menuMgr.addMenuListener(new IMenuListener() {
-					@Override
-					public void menuAboutToShow(IMenuManager manager) {
-						manager.removeAll();
-						// initialize the action to perform
-						Action rename = new Action() {
-							public void run() {
-								// Identify the selected row
-								TreeItem item = (TreeItem) e.item;
-								if (item == null) {
-									return;
-								}
-								// The control that will be the editor must be a child of the Tree
-								Text newEditor = new Text(tree, SWT.NONE);
-								StructuralElementInstance temp = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
-								newEditor.setText(temp.getName());
-								newEditor.addModifyListener(new ModifyListener() {
-									public void modifyText(ModifyEvent e) {
-										Text text = (Text) editor.getEditor();
-										editor.getItem().setText(text.getText());
-										StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
-										sc.setName(text.getText());
-									}
-								});
-								newEditor.selectAll();
-								newEditor.setFocus();
-								editor.setEditor(newEditor, item);
-								
-							}
-						};
-						rename.setText("Rename");
-						manager.add(rename);
-						Action duplicate = new Action() {
-
-							public void run() {
-								StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
-								ProductStructureHelper.duplicate(sc);
-							}
-						};
-						duplicate.setText("Duplicate");
-						manager.add(duplicate);
+		for (int[] config : validConfigurations) {
+			ActiveConceptHelper acHelper = new ActiveConceptHelper(rep);
+			Concept activeConcept = acHelper.getConcept(ProductStructureHelper.getConcept());
+			
+			// Create a configurationTree instance with repository as parent.
+			ConfigurationTree ct = (ConfigurationTree) ProductStructureHelper.createTreeModel(sc);
+			// We merely want to add the features of the specific configuration.
+			ct.removeAllStructuralElementInstance(ct.getDeepChildren(IBeanStructuralElementInstance.class));
+			StructuralElementInstance rootFeature = ct.getStructuralElementInstance();
+			
+			// iterate through the features of the configuration.
+			for (int i = 1; i < config.length; i++) {
+				if (config[i] > 0) {
+					
+					// get actual feature of the FeatureTree
+					StructuralElementInstance actualFeature = variableToFeature.get(config[i]);
+					// find out parent
+					int actualParentVariable = featureToVariable.get(actualFeature.getParent());
+					
+					
+					// first feature has to be added to the root feature.
+					if (actualParentVariable == 1) {
+						StructuralElementInstance feature = ProductStructureHelper.createStructuralElementInstance(activeConcept, ElementConfiguration.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME, rootFeature);
+						feature.setName(actualFeature.getName());
+						feature.setType(acHelper.getStructuralElement(ElementConfiguration.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME));
+						rootFeature.getChildren().add(feature);
+					} else {
+						StructuralElementInstance parentFeature = rootFeature.getDeepChildren().get(actualParentVariable-2);
+						StructuralElementInstance feature = ProductStructureHelper.createStructuralElementInstance(activeConcept, ElementConfiguration.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME, parentFeature);
+						feature.setName(actualFeature.getName());
+						feature.setType(acHelper.getStructuralElement(ElementConfiguration.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME));
+						parentFeature.getChildren().add(feature);
 					}
-				});
-				Menu menu = menuMgr.createContextMenu(treeViewer.getTree());
-				treeViewer.getTree().setMenu(menu);
-			}
-		});
-		treeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				Control oldEditor = editor.getEditor();
-				if (oldEditor != null) {
-					oldEditor.dispose();
+					
 				}
-				selection = event.getSelection();
 			}
-		});
+			treeModels.add(rootFeature);
+		}
+		
+		// Create the tree models for the configurations. 
+		for (StructuralElementInstance treeModel : treeModels) {
+			TreeViewer treeViewer = new TreeViewer(content, SWT.BORDER);
+			treeViewer.setComparator(new VirSatNavigatorSeiSorter());
+			treeViewer.setContentProvider(filteredCP);
+			treeViewer.setLabelProvider(lp);	
+			treeViewer.setInput(treeModel);
+			treeViewer.expandAll();
+			tree.add(treeViewer.getTree());
+			editor = new TreeEditor(treeViewer.getTree());
+			
+			treeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+				@Override
+				public void selectionChanged(SelectionChangedEvent event) {
+					Control oldEditor = editor.getEditor();
+					if (oldEditor != null) {
+						oldEditor.dispose();
+					}
+					selection = event.getSelection();
+					
+				}
+			});
+		}
 	}
 	
 	/*
-	 * Get all valid configurations
+	 * Takes a FeatureTree instance, translates it to conjunctive normal form and feeds it to a SAT solver
+	 * to retrieve valid variants of the feature model.
+	 * @param StructuralElementInstance the FeatureTree to be evaluated
 	 */
-	public List<ConfigurationTree> getAllValidVariants(StructuralElementInstance featureTree) {
-
-		
+	public void getAllValidVariants(StructuralElementInstance featureTree) {
 		/*
 		 * Translate to cnf
 		 
@@ -341,22 +328,11 @@ public class VariantSelectionPage extends WizardPage {
 			Cross-tree constraint c requires p | c -> p
 			Cross-tree constraint c excludes p | c -> -p
 		*/
-		
+			
 		/*
-		 * De Morgan.
-		 * 
-		 * A <=> B        : (A => B) AND (B => A)
-		 * A => B         : NOT(A) OR B
-		 *
+		 * Map features to variables of the CNF.
+		 * Root Feature = 1 and so on.
 		 */
-		
-		
-		/*
-		 * Map the features to CNF variables.
-		 */
-		// Two maps to improve performance
-		Map<Integer, StructuralElementInstance> variableToFeature = new HashMap<>();
-		Map<StructuralElementInstance, Integer> featureToVariable = new HashMap<>();
 		
 		// put root feature
 		variableToFeature.put(1, featureTree);
@@ -372,22 +348,18 @@ public class VariantSelectionPage extends WizardPage {
 		}
 		
 		/*
-		 * Use DimacStringSolver to safely build a DIMACS file.
+		 * Use ModelIterator to find all valid variants.
 		 */
 		ISolver solver = new ModelIterator(SolverFactory.newDefault());
 		
-		// List for preventing duplicated subfeatureRealtionship clauses
+		// List for preventing duplicated SubFeatureRelationship clauses
 		List<Integer> existingSubFeatureRelationships = new ArrayList<Integer>();
 		
 		/*
-		 * Iterate through the features and view every feature as child node.
+		 * Iterate through the features and view every feature as child node 
+		 * (thus, see parent node for SubFeatureRelationship).
 		 */
 		for (Entry<Integer, StructuralElementInstance> feature : variableToFeature.entrySet()) {
-			
-			/*
-			 * feature.getKey() = variable for the clauses
-			 * feature.getValue() = structuralElementInstance for handling
-			 */
 			
 			// root is not a child
 			if (feature.getKey() == 1) {
@@ -422,8 +394,10 @@ public class VariantSelectionPage extends WizardPage {
 				SubFeatureRelationship subFeatureRelationship = new SubFeatureRelationship(parentSubFeatureRelationship.get());
 				
 				if (subFeatureRelationship.getCharacter() != null && !existingSubFeatureRelationships.contains(feature.getKey())) {
+					// For SubFeatureRelationships we need the other affected feature variables.
 					int[] subFeatureVariables = parent.getChildren().stream().mapToInt(child -> featureToVariable.get(child)).toArray();
 					
+					// Add parent variable to express the relation to parent feature.
 					int[] subFeaturePlusParent = new int[subFeatureVariables.length+1];
 					for (int i = 0; i < subFeatureVariables.length; i++) {
 						subFeaturePlusParent[i] = subFeatureVariables[i];
@@ -439,10 +413,11 @@ public class VariantSelectionPage extends WizardPage {
 				}
 				
 			/*
-			 * Create new clauses when the parent has no subfeatureRelationship which affects this feature.
+			 * Create new clauses when the parent has no SubFeatureRelationship which affects this feature.
 			 */
 			} else {
 				
+				// If value of PropertyInstance is set to true
 				boolean optionalFlagSet = true;
 				
 				/*
@@ -452,7 +427,7 @@ public class VariantSelectionPage extends WizardPage {
 				
 					OptionalRelationship optionalInstance = new OptionalRelationship(optionalRelationship.get());
 					
-					// check if value is "true", else the relationship is mandatory
+					// Check if value is "true", else the relationship is mandatory
 					if (optionalInstance.getIsOptional()) { 
 						handleOptional(featureToVariable.get(parent), feature.getKey(), solver); 
 					} 
@@ -461,7 +436,7 @@ public class VariantSelectionPage extends WizardPage {
 					}			
 					
 				/*
-				 * If either no optionalRelationship is defined or it is set to false, we assume the relationship is mandatory.
+				 * If either no OptionalRelationship is defined or it is set to false, we assume the relationship is mandatory.
 				 */
 				} else if (optionalRelationship.isEmpty() || !optionalFlagSet) {
 					handleMandatory(featureToVariable.get(parent), feature.getKey(), solver);
@@ -478,7 +453,7 @@ public class VariantSelectionPage extends WizardPage {
 				
 				if (crossTreeConstraintInstance.getReferenceUuid() != null) {
 					
-					// get other feature variable by uuid
+					// Get other feature variable by uuid
 					int referencedFeatureVariable = 0;
 					for (Entry<Integer, StructuralElementInstance> otherFeature : variableToFeature.entrySet()) {
 						if (otherFeature.getValue().getUuid().toString().equals(crossTreeConstraintInstance.getReferenceUuid())) {
@@ -486,9 +461,11 @@ public class VariantSelectionPage extends WizardPage {
 						}
 					}
 					
-					switch (crossTreeConstraintInstance.getCharacter()) {
-						case "Requires" -> handleRequires(referencedFeatureVariable, feature.getKey(), solver);
-						case "Excludes" -> handleExcludes(referencedFeatureVariable, feature.getKey(), solver);
+					switch (crossTreeConstraintInstance.getCharacterBean().getValue()) {
+						// Requires
+						case "enumValue1" -> handleRequires(referencedFeatureVariable, feature.getKey(), solver);
+						// Excludes
+						case "enumValue2" -> handleExcludes(referencedFeatureVariable, feature.getKey(), solver);
 					}
 				}
 			}
@@ -514,24 +491,17 @@ public class VariantSelectionPage extends WizardPage {
 		     // UNSAT case
 		 }
 		 
-		 List<ConfigurationTree> validConfigurations = new ArrayList<>(); 
+		 /*
+		  * Remove first entry of list, because it is case of every feature being negated.
+		  */
+		 models.remove(0);
 		 
-		 for (int[] model : models) {
-			 ConfigurationTree ft = (ConfigurationTree) ProductStructureHelper.createTreeModel(featureTree);
-			 for (int i = 0; i < model.length; i++) {
-				 if (model[i] < 0) {
-					 IBeanStructuralElementInstance fe = ProductStructureHelper.createTreeModel(variableToFeature.get(Math.abs(model[i])));
-					 ft.remove(fe);
-				 }
-			 }
-			 validConfigurations.add(ft);
-		 }
-		 
-		 return validConfigurations;
+		 validConfigurations = models;
 	}
 	
 	/*
 	 * Handle mandatory relationship.
+	 * (-parent or child) and (-child or parent)
 	 */
 	public void handleMandatory(int parentVariable, int childVariable, ISolver solver) {
 		try {
@@ -545,6 +515,7 @@ public class VariantSelectionPage extends WizardPage {
 	
 	/*
 	 * Handle optional relationship.
+	 * (-child or parent)
 	 */
 	public void handleOptional(int parentVariable, int childVariable, ISolver solver) {
 		try {
@@ -557,13 +528,15 @@ public class VariantSelectionPage extends WizardPage {
 	
 	/*
 	 * Handle requires cross tree constraint.
+	 * (-optional or required)
 	 */
 	public void handleRequires(int requiredVariable, int optionalVariable, ISolver solver) {
-		handleOptional(requiredVariable, optionalVariable, solver);
+		handleOptional(optionalVariable, requiredVariable, solver);
 	}
 	
 	/*
 	 * Handle excludes cross tree constraint.
+	 * (-y or -x)
 	 */
 	public void handleExcludes(int excludedVariable, int thisVariable, ISolver solver) {
 		try {
@@ -576,6 +549,9 @@ public class VariantSelectionPage extends WizardPage {
 	
 	/*
 	 * Handle XOR relationship.
+	 * (child_1 or ... child_n or -parent) and
+	 * for i..n(-child_i or parent) and
+	 * for i<j(-child_i or -child_j)
 	 */
 	public void handleXor(int[] subFeatures, ISolver solver) {
 		//solver.addParity(new VecInt(subFeatures), true).toString();
@@ -634,6 +610,8 @@ public class VariantSelectionPage extends WizardPage {
 	
 	/*
 	 * Handle OR relationship.
+	 * (child_1 or ... child_n or -parent) and
+	 * for i..n(-child_i or parent)
 	 */
 	public void handleOr(int[] subFeatures, ISolver solver) {
 		

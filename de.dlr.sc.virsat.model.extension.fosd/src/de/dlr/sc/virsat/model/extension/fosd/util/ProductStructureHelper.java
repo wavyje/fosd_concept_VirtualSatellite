@@ -244,6 +244,21 @@ public class ProductStructureHelper {
 	}
 	
 	/**
+	 * @param activeConcept the concept
+	 * @param fullyQualifiedName of structuralElement that should be created
+	 * @param parent where to add
+	 * @return the created  StructuralElementInstance
+	 */
+	public static StructuralElementInstance createStructuralElementInstance(Concept activeConcept, String fullyQualifiedName, StructuralElementInstance parent) {
+		String structuralElementName = fullyQualifiedName;
+		StructuralElement structuralElement = ActiveConceptHelper.getStructuralElement(activeConcept, structuralElementName);
+		StructuralInstantiator structuralInstantiator = new StructuralInstantiator();
+		StructuralElementInstance structuralElementInstance = structuralInstantiator.generateInstance(structuralElement, structuralElementName);
+		structuralElementInstance.setAssignedDiscipline(parent.getAssignedDiscipline());
+		return structuralElementInstance;
+	}
+	
+	/**
 	 * Duplicates a node in the tree
 	 * @param sc the structural element instance to be duplicated
 	 * @author bell_er
