@@ -16,7 +16,7 @@ Concept de.dlr.sc.virsat.model.extension.fosd displayname "Feature-oriented deve
 	
 	// --- SubFeatureRelationship ---
 	Category SubFeatureRelationship description "Category to describe the relationship of the subfeatures." {
-		Applicable For [Feature];
+		Applicable For [Feature, FeatureTree];
 		Cardinality 1;
 		EnumProperty character values [or = "OR", xor = "XOR"];
 	}
@@ -31,6 +31,12 @@ Concept de.dlr.sc.virsat.model.extension.fosd displayname "Feature-oriented deve
 		Applicable For [Feature];
 		StringProperty referenceUuid;
 		EnumProperty character values [enumValue1 = "REQUIRES", enumValue2 = "EXCLUDES"];
+	}
+	
+	Category MassBudget description "Max cumulated mass" {
+		Applicable For [FeatureTree];
+		Cardinality 1;
+		FloatProperty mass;
 	}
 	
 }

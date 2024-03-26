@@ -3,6 +3,7 @@ package de.dlr.sc.virsat.model.extension.fosd.ui.handler;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -21,6 +22,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 
 import de.dlr.sc.virsat.model.concept.types.structural.ABeanStructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.Repository;
+import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.concepts.Concept;
 import de.dlr.sc.virsat.model.dvlm.concepts.util.ActiveConceptHelper;
 import de.dlr.sc.virsat.model.dvlm.structural.StructuralElement;
@@ -28,6 +30,7 @@ import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.structural.util.StructuralInstantiator;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
 import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.ChangeRelationOrDeleteWizard;
+import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.VariantSelectionPage;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
 import de.dlr.sc.virsat.model.extension.ps.model.ProductTree;
 import de.dlr.sc.virsat.model.ui.preferences.PreferencesEditorAutoOpen;
@@ -90,29 +93,64 @@ public class UpdateFeatureTreeHandler extends AbstractHandler implements IHandle
 			}
 		}
 		
+		
+		
 		// compare size of trees
 		// if different, ElementDefinitions were added
 		if (featureTree.getDeepChildren().size() < (productTreeSEs.size() + removedFromProductTree.size())) {
 			List<StructuralElementInstance> featuresToAdd = getAddedElementDefinitions(productTree.getDeepChildren(), featureTree.getDeepChildren());
 			
-			for (StructuralElementInstance featureToAdd : featuresToAdd) {
-				EList<StructuralElementInstance> nodesInFeatureTree = featureTree.getDeepChildren();
-				nodesInFeatureTree.add(featureTree);
-				StructuralElementInstance parent = findParentInFeatureTree(nodesInFeatureTree, featureToAdd);
-				addFeatureToFeatureTree(parent, featureToAdd);
+			EList<StructuralElementInstance> nodesInFeatureTree = featureTree.getDeepChildren();
+			nodesInFeatureTree.add(featureTree);
+			
+			/*
+			while (!featuresToAdd.isEmpty()) {
+				for (StructuralElementInstance featureToAdd : featuresToAdd) {
+					StructuralElementInstance parent = findParentInFeatureTree(nodesInFeatureTree, featureToAdd);
+					if (parent == null) {
+						continue;
+					}
+					addFeatureToFeatureTree(parent, featureToAdd);
+					featuresToAdd.remove(featureToAdd);
+				}
+			}*/
+			
+			
+			while (!featuresToAdd.isEmpty()) {
+				Iterator<StructuralElementInstance> i = featuresToAdd.iterator();
+				while (i.hasNext()) {
+					StructuralElementInstance featureToAdd = i.next();
+					StructuralElementInstance parent = findParentInFeatureTree(nodesInFeatureTree, featureToAdd);
+					if (parent == null) {
+						continue;
+					}
+					addFeatureToFeatureTree(parent, featureToAdd);
+					i.remove();
+				}
 			}
 		}
+		
+		/*
+		 * Check if feature model is void
+		 */
 			
 		if (!removedFromProductTree.isEmpty()) {
-			Shell shell = HandlerUtil.getActiveWorkbenchWindow(event).getShell();
-			ChangeRelationOrDeleteWizard wizard = new ChangeRelationOrDeleteWizard();
-			wizard.setSelection(selection);
-			WizardDialog dialog = new WizardDialog(shell, wizard);
-			dialog.open(); 
+			for (StructuralElementInstance sei : removedFromProductTree) {
+				Optional<CategoryAssignment> subFeatureRelationship = sei.getParent().getCategoryAssignments().stream()
+						.filter(ca -> ca.getType().getName().equals("SubFeatureRelationship"))
+						.findAny();
+				if (subFeatureRelationship.isEmpty()) {
+					Shell shell = HandlerUtil.getActiveWorkbenchWindow(event).getShell();
+					ChangeRelationOrDeleteWizard wizard = new ChangeRelationOrDeleteWizard();
+					wizard.setSei(sei);
+					WizardDialog dialog = new WizardDialog(shell, wizard);
+					dialog.open(); 
+				}
+			}
 		}
 		/*
-		
-		*/			
+		 * Check if feature model is void
+		 */		
 		return null;
 		
 	}

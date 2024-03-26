@@ -10,38 +10,25 @@
 package de.dlr.sc.virsat.model.extension.fosd.ui.wizards;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Function;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.emf.common.command.Command;
-import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ReflectiveItemProviderAdapterFactory;
 import org.eclipse.emf.edit.provider.resource.ResourceItemProviderAdapterFactory;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuListener;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.TreeEditor;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -50,23 +37,17 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.ui.ide.undo.DeleteResourcesOperation;
 import org.sat4j.core.VecInt;
 import org.sat4j.minisat.SolverFactory;
 import org.sat4j.specs.ContradictionException;
 import org.sat4j.specs.ISolver;
 import org.sat4j.specs.IVecInt;
 import org.sat4j.specs.TimeoutException;
-import org.sat4j.tools.DimacsStringSolver;
 import org.sat4j.tools.ModelIterator;
-
-import de.dlr.sc.virsat.model.concept.types.structural.ABeanStructuralElementInstance;
+import de.dlr.sc.virsat.model.concept.list.IBeanList;
 import de.dlr.sc.virsat.model.concept.types.structural.IBeanStructuralElementInstance;
-import de.dlr.sc.virsat.model.concept.types.util.BeanStructuralElementInstanceHelper;
 import de.dlr.sc.virsat.model.dvlm.Repository;
 import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.categories.propertydefinitions.provider.PropertydefinitionsItemProviderAdapterFactory;
@@ -79,25 +60,25 @@ import de.dlr.sc.virsat.model.dvlm.general.provider.GeneralItemProviderAdapterFa
 import de.dlr.sc.virsat.model.dvlm.provider.DVLMItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.roles.provider.RolesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
-import de.dlr.sc.virsat.model.dvlm.structural.StructuralFactory;
 import de.dlr.sc.virsat.model.dvlm.structural.provider.DVLMStructuralItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.units.provider.UnitsItemProviderAdapterFactory;
-import de.dlr.sc.virsat.model.dvlm.util.DVLMCopier;
-import de.dlr.sc.virsat.model.extension.fosd.model.AFeature;
+import de.dlr.sc.virsat.model.ext.core.model.GenericCategory;
+import de.dlr.sc.virsat.model.extension.budget.mass.model.MassEquipment;
 import de.dlr.sc.virsat.model.extension.fosd.model.CrossTreeConstraint;
-import de.dlr.sc.virsat.model.extension.fosd.model.Feature;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
+import de.dlr.sc.virsat.model.extension.fosd.model.MassBudget;
 import de.dlr.sc.virsat.model.extension.fosd.model.OptionalRelationship;
 import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
 import de.dlr.sc.virsat.model.extension.ps.model.ConfigurationTree;
 import de.dlr.sc.virsat.model.extension.ps.model.ElementConfiguration;
+import de.dlr.sc.virsat.model.extension.requirements.model.AttributeValue;
+import de.dlr.sc.virsat.model.extension.requirements.model.IVerification;
+import de.dlr.sc.virsat.model.extension.requirements.model.Requirement;
 import de.dlr.sc.virsat.project.editingDomain.VirSatEditingDomainRegistry;
 import de.dlr.sc.virsat.project.editingDomain.VirSatTransactionalEditingDomain;
 import de.dlr.sc.virsat.project.resources.VirSatProjectResource;
 import de.dlr.sc.virsat.project.resources.VirSatResourceSet;
-import de.dlr.sc.virsat.project.structure.command.CreateAddSeiWithFileStructureCommand;
-import de.dlr.sc.virsat.project.structure.command.CreateRemoveSeiWithFileStructureCommand;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatComposedContentProvider;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatFilteredWrappedTreeContentProvider;
 import de.dlr.sc.virsat.project.ui.labelProvider.VirSatComposedLabelProvider;
@@ -137,13 +118,15 @@ public class VariantSelectionPage extends WizardPage {
 	protected VariantSelectionPage(ISelection preSelect) {
 		
 		super("");
-		sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
-		if (sc.getType().getName().equals(FeatureTree.class.getSimpleName())) {
-			setTitle("Generate the Configuration Tree");
-			generateAsConfigurationTree = true;
+		if (preSelect != null) {
+			sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
+			if (sc.getType().getName().equals(FeatureTree.class.getSimpleName())) {
+				setTitle("Generate the Configuration Tree");
+				generateAsConfigurationTree = true;
+			}
+			setDescription("Right click on an element to rename or duplicate");
+			this.preSelect = preSelect;
 		}
-		setDescription("Right click on an element to rename or duplicate");
-		this.preSelect = preSelect;
 		
 	}
 
@@ -248,6 +231,9 @@ public class VariantSelectionPage extends WizardPage {
 		List<StructuralElementInstance> treeModels = new ArrayList<>();
 		
 		for (int[] config : validConfigurations) {
+			// use of a mapper, so that we can access the newly added feature and get the related original feature.
+			Map<StructuralElementInstance, StructuralElementInstance> featureToElementConfigurationMapper = new HashMap<>();
+			
 			ActiveConceptHelper acHelper = new ActiveConceptHelper(rep);
 			Concept activeConcept = acHelper.getConcept(ProductStructureHelper.getConcept());
 			
@@ -256,6 +242,7 @@ public class VariantSelectionPage extends WizardPage {
 			// We merely want to add the features of the specific configuration.
 			ct.removeAllStructuralElementInstance(ct.getDeepChildren(IBeanStructuralElementInstance.class));
 			StructuralElementInstance rootFeature = ct.getStructuralElementInstance();
+			featureToElementConfigurationMapper.put(sc, rootFeature);
 			
 			// iterate through the features of the configuration.
 			for (int i = 1; i < config.length; i++) {
@@ -273,12 +260,17 @@ public class VariantSelectionPage extends WizardPage {
 						feature.setName(actualFeature.getName());
 						feature.setType(acHelper.getStructuralElement(ElementConfiguration.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME));
 						rootFeature.getChildren().add(feature);
+						
+						featureToElementConfigurationMapper.put(actualFeature, feature);
 					} else {
-						StructuralElementInstance parentFeature = rootFeature.getDeepChildren().get(actualParentVariable-2);
+						StructuralElementInstance parentFeature = featureToElementConfigurationMapper.get(variableToFeature.get(actualParentVariable));
+						
 						StructuralElementInstance feature = ProductStructureHelper.createStructuralElementInstance(activeConcept, ElementConfiguration.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME, parentFeature);
 						feature.setName(actualFeature.getName());
 						feature.setType(acHelper.getStructuralElement(ElementConfiguration.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME));
 						parentFeature.getChildren().add(feature);
+						
+						featureToElementConfigurationMapper.put(actualFeature, feature);
 					}
 					
 				}
@@ -496,6 +488,39 @@ public class VariantSelectionPage extends WizardPage {
 		  */
 		 models.remove(0);
 		 
+		 /*
+		  * Check if variant exceeds mass budget.
+		  */
+		 Optional<CategoryAssignment> massBudgetOpt = featureTree.getCategoryAssignments().stream()
+					.filter(ca -> ca.getType().getName().equals("MassBudget"))
+					.findAny();
+		 if (massBudgetOpt.isPresent()) {
+			 MassBudget massBudget = new MassBudget(massBudgetOpt.get());
+			 List<int[]> modelsToRemove = new ArrayList<>();
+			 
+			 for (int[] model : models) {
+				double cumMass = 0.0;
+				
+				for (int i = 0; i < model.length; i++) {
+					if (model[i] > 0) {
+						Optional<CategoryAssignment> mass = variableToFeature.get(model[i]).getCategoryAssignments().stream()
+								.filter(ca -> ca.getType().getName().equals("MassEquipment"))
+								.findAny();
+						
+						if (mass.isPresent()) {
+							MassEquipment massEquipment = new MassEquipment(mass.get());
+							cumMass += massEquipment.getMass();
+						}
+						
+					}
+					if (cumMass > massBudget.getMass()) {
+						modelsToRemove.add(model);
+					}
+				}
+				
+			 }
+			 models.removeAll(modelsToRemove);
+		 }
 		 validConfigurations = models;
 	}
 	
@@ -715,5 +740,9 @@ public class VariantSelectionPage extends WizardPage {
 	 */
 	public String getSeiName() {
 		return treeName.getText();
+	}
+	
+	public List<int[]> getValidConfigurations() {
+		return this.validConfigurations;
 	}
 }

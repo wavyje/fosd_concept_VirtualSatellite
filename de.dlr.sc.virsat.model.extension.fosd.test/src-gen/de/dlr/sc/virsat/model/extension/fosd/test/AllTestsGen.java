@@ -19,6 +19,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 import junit.framework.JUnit4TestAdapter;
 
+import de.dlr.sc.virsat.model.extension.fosd.model.MassBudgetTest;
 import de.dlr.sc.virsat.model.extension.fosd.model.OptionalRelationshipTest;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTreeTest;
 import de.dlr.sc.virsat.model.extension.fosd.validator.FosdValidatorTest;
@@ -36,6 +37,7 @@ import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTest;
 	SubFeatureRelationshipTest.class,
 	OptionalRelationshipTest.class,
 	CrossTreeConstraintTest.class,
+	MassBudgetTest.class,
 	FeatureTreeTest.class,
 	FeatureTest.class,
 	Migrator1v0Test.class,

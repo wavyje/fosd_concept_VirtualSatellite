@@ -11,6 +11,7 @@ package de.dlr.sc.virsat.model.extension.fosd.ui.wizards;
 
 import org.eclipse.emf.common.command.Command;
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.edit.command.AddCommand;
 import org.eclipse.emf.edit.provider.ComposedAdapterFactory;
 import org.eclipse.emf.edit.provider.ReflectiveItemProviderAdapterFactory;
 import org.eclipse.emf.edit.provider.resource.ResourceItemProviderAdapterFactory;
@@ -43,11 +44,13 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
 import de.dlr.sc.virsat.model.dvlm.Repository;
+import de.dlr.sc.virsat.model.dvlm.categories.CategoriesPackage;
 import de.dlr.sc.virsat.model.dvlm.categories.Category;
 import de.dlr.sc.virsat.model.dvlm.categories.CategoryAssignment;
 import de.dlr.sc.virsat.model.dvlm.categories.propertydefinitions.provider.PropertydefinitionsItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.propertyinstances.provider.PropertyinstancesItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.categories.provider.DVLMCategoriesItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.dvlm.concepts.Concept;
 import de.dlr.sc.virsat.model.dvlm.concepts.provider.ConceptsItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.concepts.util.ActiveConceptHelper;
 import de.dlr.sc.virsat.model.dvlm.general.provider.GeneralItemProviderAdapterFactory;
@@ -58,8 +61,10 @@ import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
 import de.dlr.sc.virsat.model.dvlm.structural.provider.DVLMStructuralItemProviderAdapterFactory;
 import de.dlr.sc.virsat.model.dvlm.structural.util.StructuralInstantiator;
 import de.dlr.sc.virsat.model.dvlm.units.provider.UnitsItemProviderAdapterFactory;
+import de.dlr.sc.virsat.model.extension.fosd.model.Feature;
 import de.dlr.sc.virsat.model.extension.fosd.model.FeatureTree;
 import de.dlr.sc.virsat.model.extension.fosd.model.SubFeatureRelationship;
+import de.dlr.sc.virsat.model.extension.fosd.ui.command.ACreateAddSubFeatureRelationshipCommand;
 import de.dlr.sc.virsat.model.extension.fosd.ui.command.CreateAddSubFeatureRelationshipCommand;
 import de.dlr.sc.virsat.model.extension.fosd.util.ProductStructureHelper;
 import de.dlr.sc.virsat.model.extension.ps.model.AssemblyTree;
@@ -70,12 +75,14 @@ import de.dlr.sc.virsat.project.editingDomain.VirSatTransactionalEditingDomain;
 import de.dlr.sc.virsat.project.resources.VirSatProjectResource;
 import de.dlr.sc.virsat.project.resources.VirSatResourceSet;
 import de.dlr.sc.virsat.project.structure.command.CreateAddSeiWithFileStructureCommand;
+import de.dlr.sc.virsat.project.structure.command.CreateRemoveSeiWithFileStructureCommand;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatComposedContentProvider;
 import de.dlr.sc.virsat.project.ui.contentProvider.VirSatFilteredWrappedTreeContentProvider;
 import de.dlr.sc.virsat.project.ui.labelProvider.VirSatComposedLabelProvider;
 import de.dlr.sc.virsat.project.ui.navigator.commonSorter.VirSatNavigatorSeiSorter;
 import de.dlr.sc.virsat.project.ui.navigator.contentProvider.VirSatProjectContentProvider;
 import de.dlr.sc.virsat.project.ui.navigator.contentProvider.VirSatWorkspaceContentProvider;
+import de.dlr.sc.virsat.project.ui.navigator.handler.DeleteStructuralElementInstanceHandler;
 import de.dlr.sc.virsat.project.ui.navigator.labelProvider.VirSatProjectLabelProvider;
 import de.dlr.sc.virsat.project.ui.navigator.labelProvider.VirSatWorkspaceLabelProvider;
 /**
@@ -102,14 +109,14 @@ public class ChangeRelationOrDeletePage extends WizardPage {
 	 * @param preSelect the initial selection to be used as a model
 	 */
 	
-	protected ChangeRelationOrDeletePage(ISelection preSelect) {
+	protected ChangeRelationOrDeletePage(StructuralElementInstance deletedElement) {
 		
 		super("");
-		sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
+		sc = deletedElement;
 		setTitle("Change Relation or Delete");
 		
 		//setDescription("Right click on an element to rename or duplicate");
-		this.preSelect = preSelect;
+		//this.preSelect = preSelect;
 		
 	}
 
@@ -143,12 +150,17 @@ public class ChangeRelationOrDeletePage extends WizardPage {
 	    btnChangeRelation.addSelectionListener(new SelectionAdapter() {
 	    	@Override
 	    	public void widgetSelected(SelectionEvent e) {
-	    		// Identify the selected row
-	    		TreeItem[] items = tree.getSelection();
-
-	    		if (items[0] == null) {
-	    			return;
-	    		}
+	    		
+	    		ActiveConceptHelper acHelper = new ActiveConceptHelper(rep);
+				Concept activeConcept = ActiveConceptHelper.getConcept(acHelper.getStructuralElement(Feature.FULL_QUALIFIED_STRUCTURAL_ELEMENT_NAME));
+				SubFeatureRelationship conceptObject = new SubFeatureRelationship(activeConcept);
+	    		
+	    		CategoryAssignment ca = conceptObject.getTypeInstance();
+	    		
+	    		//conceptObject.setTypeInstance(ca);
+	    		conceptObject.setCharacter("xor");
+	    		Command command = AddCommand.create(ed, sc.getParent(), CategoriesPackage.Literals.ICATEGORY_ASSIGNMENT_CONTAINER__CATEGORY_ASSIGNMENTS, ca);
+	    		ed.getCommandStack().execute(command);
 	    		// The control that will be the editor must be a child of the Tree
 	    		/*
 	    		Text newEditor = new Text(tree, SWT.NONE);
@@ -193,15 +205,15 @@ public class ChangeRelationOrDeletePage extends WizardPage {
 	    	}
 	    });
 	    btnChangeRelation.setText("Change Relation");
-	    Button btnDuplicate = new Button(composite, SWT.NONE);
-	    btnDuplicate.addSelectionListener(new SelectionAdapter() {
+	    Button btnRemove = new Button(composite, SWT.NONE);
+	    btnRemove.addSelectionListener(new SelectionAdapter() {
 	    	@Override
 	    	public void widgetSelected(SelectionEvent e) {
-	    		StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) selection).getFirstElement();
-	    		ProductStructureHelper.duplicate(sc);
+	    		Command removeStructuralElementInstance = CreateRemoveSeiWithFileStructureCommand.create(sc, DeleteStructuralElementInstanceHandler.DELETE_RESOURCE_OPERATION_FUNCTION);
+	    		ed.getCommandStack().execute(removeStructuralElementInstance);
 	    	}
 	    });
-	    btnDuplicate.setText("Delete Feature");
+	    btnRemove.setText("Delete Feature");
 	    new Label(content, SWT.NONE);
 	    Label lblTreeName = new Label(content, SWT.NONE);
 	    lblTreeName.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
@@ -241,7 +253,7 @@ public class ChangeRelationOrDeletePage extends WizardPage {
 		treeViewer.setContentProvider(filteredCP);
 		treeViewer.setLabelProvider(lp);	
 		// create the new Structural element 
-		StructuralElementInstance sc = (StructuralElementInstance) ((IStructuredSelection) preSelect).getFirstElement();
+		
 		this.ed = VirSatEditingDomainRegistry.INSTANCE.getEd(sc); 
 		VirSatResourceSet virSatResourceSet = ed.getResourceSet();
 		this.rep = virSatResourceSet.getRepository();
@@ -267,6 +279,7 @@ public class ChangeRelationOrDeletePage extends WizardPage {
 					public void menuAboutToShow(IMenuManager manager) {
 						manager.removeAll();
 						// initialize the action to perform
+						/*
 						Action rename = new Action() {
 							public void run() {
 								// Identify the selected row
@@ -302,7 +315,7 @@ public class ChangeRelationOrDeletePage extends WizardPage {
 							}
 						};
 						duplicate.setText("Duplicate");
-						manager.add(duplicate);
+						manager.add(duplicate);*/
 					}
 				});
 				Menu menu = menuMgr.createContextMenu(treeViewer.getTree());

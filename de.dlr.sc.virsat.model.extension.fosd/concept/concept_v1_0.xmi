@@ -2,7 +2,7 @@
 <dvlm_c:Concept xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dvlm_c="http://www.virsat.sc.dlr.de/dvlm/v10/c" xmlns:dvlm_cppd="http://www.virsat.sc.dlr.de/dvlm/v10/cp/cppd" name="de.dlr.sc.virsat.model.extension.fosd" description="Use FOSD concepts for easier spacecraft development." displayName="Feature-oriented development">
   <imports importedNamespace="de.dlr.sc.virsat.model.extension.ps.*"/>
   <imports importedNamespace="de.dlr.sc.virsat.model.ext.core.*"/>
-  <categories name="SubFeatureRelationship" description="Category to describe the relationship of the subfeatures." applicableFor="de.dlr.sc.virsat.model.extension.fosd.Feature" cardinality="1">
+  <categories name="SubFeatureRelationship" description="Category to describe the relationship of the subfeatures." applicableFor="de.dlr.sc.virsat.model.extension.fosd.Feature de.dlr.sc.virsat.model.extension.fosd.FeatureTree" cardinality="1">
     <properties xsi:type="dvlm_cppd:EnumProperty" name="character">
       <values name="or" value="OR"/>
       <values name="xor" value="XOR"/>
@@ -19,6 +19,10 @@
       <values name="enumValue1" value="REQUIRES"/>
       <values name="enumValue2" value="EXCLUDES"/>
     </properties>
+    <extendsCategory href="platform:/resource/de.dlr.sc.virsat.model.ext.core/concept/concept.xmi#de.dlr.sc.virsat.model.ext.core.GenericCategory"/>
+  </categories>
+  <categories name="MassBudget" description="Max cumulated mass" applicableFor="de.dlr.sc.virsat.model.extension.fosd.FeatureTree" cardinality="1">
+    <properties xsi:type="dvlm_cppd:FloatProperty" name="mass"/>
     <extendsCategory href="platform:/resource/de.dlr.sc.virsat.model.ext.core/concept/concept.xmi#de.dlr.sc.virsat.model.ext.core.GenericCategory"/>
   </categories>
   <structuralElements name="FeatureTree" description="Feature tree to describe common and variant spacecraft components." isRootStructuralElement="true">

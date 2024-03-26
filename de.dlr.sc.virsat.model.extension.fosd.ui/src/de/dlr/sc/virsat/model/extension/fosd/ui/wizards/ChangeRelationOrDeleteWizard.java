@@ -17,6 +17,7 @@ import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 
 import de.dlr.sc.virsat.project.structure.command.CreateAddSeiWithFileStructureCommand;
+import de.dlr.sc.virsat.model.dvlm.structural.StructuralElementInstance;
 import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.ChangeRelationOrDeletePage;
 
 
@@ -31,7 +32,7 @@ import de.dlr.sc.virsat.model.extension.fosd.ui.wizards.ChangeRelationOrDeletePa
 public class ChangeRelationOrDeleteWizard extends Wizard implements INewWizard {
 
 	private ChangeRelationOrDeletePage generate;
-	private ISelection selection;
+	private StructuralElementInstance sei;
 
 	/**
 	 * Create a new Generate Wizard 
@@ -45,8 +46,8 @@ public class ChangeRelationOrDeleteWizard extends Wizard implements INewWizard {
 	 * Set the selection for the new window
 	 * @param selection to be set
 	 */
-	public void setSelection(ISelection selection) {
-		this.selection = selection;
+	public void setSei(StructuralElementInstance sei) {
+		this.sei = sei;
 	}
 	/**
 	 * Perform Finish
@@ -62,7 +63,7 @@ public class ChangeRelationOrDeleteWizard extends Wizard implements INewWizard {
 	}
 	@Override
 	public void addPages() {
-		generate = new ChangeRelationOrDeletePage(selection);
+		generate = new ChangeRelationOrDeletePage(sei);
 		addPage(generate);
 	}
 	@Override

@@ -28,6 +28,10 @@
 		pathToImage="resources/icons/CrossTreeConstraint.gif">
 	</conceptImage>
 	<conceptImage
+		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.MassBudget"
+		pathToImage="resources/icons/MassBudget.gif">
+	</conceptImage>
+	<conceptImage
 		fullQualifiedID="de.dlr.sc.virsat.model.extension.fosd.FeatureTree"
 		pathToImage="resources/icons/FeatureTree.gif">
 	</conceptImage>
@@ -48,6 +52,10 @@
 	<command
 		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddCrossTreeConstraint"
 		name="Add CrossTreeConstraint">
+	</command>
+	<command
+		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddMassBudget"
+		name="Add MassBudget">
 	</command>
 	<command
 		id="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddFeatureTree"
@@ -75,6 +83,11 @@
 	      icon="resources/icons/CrossTreeConstraint.gif">
 	</image>
 	<image
+	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddMassBudget"
+	      disabledIcon="resources/icons/MassBudget_disabled.gif"
+	      icon="resources/icons/MassBudget.gif">
+	</image>
+	<image
 	      commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddFeatureTree"
 	      disabledIcon="resources/icons/FeatureTree_disabled.gif"
 	      icon="resources/icons/FeatureTree.gif">
@@ -97,6 +110,10 @@
 	<handler
 		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddCrossTreeConstraintHandler"
 		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddCrossTreeConstraint">
+	</handler>
+	<handler
+		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddMassBudgetHandler"
+		commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddMassBudget">
 	</handler>
 	<handler
 		class="de.dlr.sc.virsat.model.extension.fosd.ui.handler.AddStructuralElementInstanceFeatureTreeHandler"
@@ -197,6 +214,28 @@
 		</command>
 		<command
 			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddCrossTreeConstraint"
+			style="push">
+			<visibleWhen
+				checkEnabled="true">
+				<with
+					variable="selection">
+					<iterate
+						ifEmpty="false"
+						operator="and">
+						<test 
+							property="de.dlr.sc.virsat.model.extension.fosd.ui.propertyTester.conceptEnabled"
+							value="true" 
+							forcePluginActivation="true">
+						</test>		
+						<instanceof
+							value="de.dlr.sc.virsat.model.dvlm.categories.ICategoryAssignmentContainer">
+						</instanceof>
+					</iterate>
+				</with>
+			</visibleWhen>
+		</command>
+		<command
+			commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.AddMassBudget"
 			style="push">
 			<visibleWhen
 				checkEnabled="true">
@@ -324,6 +363,16 @@
 		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
 		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionCrossTreeConstraint">
 		</uiSnippet>
+		<uiSnippet
+		      id="de.dlr.sc.virsat.model.extension.fosd.table.uiSnippetMassBudget"
+		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
+		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetTableMassBudget">
+		</uiSnippet>
+		<uiSnippet
+		      id="de.dlr.sc.virsat.model.extension.fosd.section.uiSnippetMassBudget"
+		      section="de.dlr.sc.virsat.model.extension.fosd.ui.Section"
+		      snippet="de.dlr.sc.virsat.model.extension.fosd.ui.snippet.UiSnippetSectionMassBudget">
+		</uiSnippet>
 	</extension>
 	<!-- Plugin.XML Protected Region Start -->
 <extension point="org.eclipse.ui.commands">
@@ -369,25 +418,6 @@
 							<command
 								commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.Generate"
 								style="push">
-								<!--
-								<visibleWhen
-									checkEnabled="true">
-									<with
-										variable="selection">
-										<iterate
-											ifEmpty="false"
-											operator="and">
-											<test
-												forcePluginActivation="true"
-												property="de.dlr.sc.virsat.model.extension.fosd.ui.propertyTester.conceptEnabled"
-												value="true">
-											</test>
-											<instanceof
-												value="de.dlr.sc.virsat.model.dvlm.categories.ICategoryAssignmentContainer">
-											</instanceof>
-										</iterate>
-									</with>
-								</visibleWhen> -->
 							</command>
 				<command
 					commandId="de.dlr.sc.virsat.model.extension.fosd.ui.command.Variant"

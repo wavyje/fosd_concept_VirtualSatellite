@@ -29,6 +29,10 @@
 			id="de.dlr.sc.virsat.model.extension.fosd.CrossTreeConstraint"
 			caBean="de.dlr.sc.virsat.model.extension.fosd.model.CrossTreeConstraint">
 		</CategoryAssignmentBean>
+		<CategoryAssignmentBean
+			id="de.dlr.sc.virsat.model.extension.fosd.MassBudget"
+			caBean="de.dlr.sc.virsat.model.extension.fosd.model.MassBudget">
+		</CategoryAssignmentBean>
 	</extension>
 	<extension point="de.dlr.sc.virsat.model.edit.ConceptTypeFactorySeiBeanRegistration">
 		<StructuralElementInstanceBean
